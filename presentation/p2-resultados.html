@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O Congresso em Dados — Resultados | Bússola Pública</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-editorial: 'Newsreader', 'Georgia', serif;
+    --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
+    --bg: #08080a; --surface: #111114; --surface2: #19191e; --surface-elevated: #222228;
+    --border: rgba(120,160,220,0.08); --border-bright: rgba(120,160,220,0.18);
+    --text: #eaedf2; --text-dim: #6e7a8c;
+    --accent: #4a9eff; --accent-dim: rgba(74,158,255,0.10); --accent2: #3d8ae6;
+    --silver: #b0bec5; --silver-bright: #cfd8dc; --silver-dim: rgba(176,190,197,0.10);
+    --gold: #d4af37; --gold-dim: rgba(212,175,55,0.10);
+    --orange: #ef9000; --orange-dim: rgba(239,144,0,0.10);
+    --green: #3fb950; --green-dim: rgba(63,185,80,0.10);
+    --red: #f85149; --red-dim: rgba(248,81,73,0.10);
+    --blue: #60a5fa; --blue-dim: rgba(96,165,250,0.10);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.10);
+    --cyan: #22d3ee; --cyan-dim: rgba(34,211,238,0.10);
+    --code-bg: #060608; --code-text: #c8d0dc;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font-body); color:var(--text); background:var(--bg); overflow:hidden; }
+  body::after { content:''; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.035;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); }
+  .deck { height:100dvh; overflow-y:auto; scroll-snap-type:y mandatory; scroll-behavior:smooth; }
+  .slide { height:100dvh; scroll-snap-align:start; overflow:hidden; position:relative;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:clamp(32px,5vh,64px) clamp(36px,6vw,96px);
+    isolation:isolate; opacity:0; transform:translateY(40px) scale(0.98);
+    transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+  .slide.visible { opacity:1; transform:none; }
+  .slide .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1); }
+  .slide.visible .reveal { opacity:1; transform:none; }
+  .slide.visible .reveal:nth-child(1){transition-delay:0.1s}
+  .slide.visible .reveal:nth-child(2){transition-delay:0.2s}
+  .slide.visible .reveal:nth-child(3){transition-delay:0.3s}
+  .slide.visible .reveal:nth-child(4){transition-delay:0.4s}
+  .slide.visible .reveal:nth-child(5){transition-delay:0.5s}
+  .slide.visible .reveal:nth-child(6){transition-delay:0.6s}
+  .slide.visible .reveal:nth-child(7){transition-delay:0.7s}
+  .slide.visible .reveal:nth-child(8){transition-delay:0.8s}
+  @media(prefers-reduced-motion:reduce){.slide,.slide .reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  .deck-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--accent));z-index:100;transition:width 0.3s ease;pointer-events:none}
+  .deck-dots{position:fixed;right:clamp(12px,2vw,24px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;padding:8px;background:rgba(8,8,10,0.6);border-radius:20px;backdrop-filter:blur(4px)}
+  .deck-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);opacity:0.3;border:none;padding:0;cursor:pointer;transition:opacity 0.2s,transform 0.2s}
+  .deck-dot:hover{opacity:0.6}
+  .deck-dot.active{opacity:1;transform:scale(1.5);background:var(--gold)}
+  .deck-counter{position:fixed;bottom:clamp(12px,2vh,24px);right:clamp(12px,2vw,24px);font-family:var(--font-mono);font-size:12px;color:var(--text-dim);z-index:100}
+  .deck-hints{position:fixed;bottom:clamp(12px,2vh,24px);left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:11px;color:var(--text-dim);opacity:0.6;z-index:100;transition:opacity 0.5s}
+  .deck-hints.faded{opacity:0;pointer-events:none}
+  .slide__display{font-family:var(--font-display);font-size:clamp(56px,12vw,140px);font-weight:400;letter-spacing:-1px;line-height:0.92}
+  .slide__heading{font-family:var(--font-display);font-size:clamp(36px,7vw,72px);font-weight:400;letter-spacing:-0.5px;line-height:1.1}
+  .slide__body{font-family:var(--font-editorial);font-size:clamp(19px,2.6vw,26px);font-weight:400;line-height:1.6;color:var(--text-dim);letter-spacing:0.01em}
+  .slide__subtitle{font-family:var(--font-mono);font-size:clamp(13px,1.7vw,18px);color:var(--text-dim);letter-spacing:2px;text-transform:uppercase}
+  .slide__label{font-family:var(--font-mono);font-size:clamp(12px,1.4vw,15px);font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--gold);margin-bottom:16px}
+  .slide__decor{position:absolute;pointer-events:none;z-index:0}
+  .gradient-text{background:linear-gradient(135deg,var(--gold) 0%,var(--silver-bright) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .slide--title{justify-content:center;align-items:center;text-align:center;background-image:radial-gradient(ellipse at 50% 20%,rgba(212,175,55,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(74,158,255,0.03) 0%,transparent 40%)}
+  @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .shimmer-text{background:linear-gradient(135deg,var(--gold) 0%,#ffffff 30%,var(--silver-bright) 60%,var(--gold) 100%);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 6s ease infinite}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 15px rgba(74,158,255,0.12),0 0 30px rgba(74,158,255,0.04)}50%{box-shadow:0 0 25px rgba(74,158,255,0.25),0 0 50px rgba(74,158,255,0.08)}}
+  @keyframes pulse-gold{0%,100%{box-shadow:0 0 15px rgba(212,175,55,0.12),0 0 30px rgba(212,175,55,0.04)}50%{box-shadow:0 0 25px rgba(212,175,55,0.25),0 0 50px rgba(212,175,55,0.08)}}
+  @keyframes pulse-green{0%,100%{box-shadow:0 0 15px rgba(63,185,80,0.12),0 0 30px rgba(63,185,80,0.04)}50%{box-shadow:0 0 25px rgba(63,185,80,0.25),0 0 50px rgba(63,185,80,0.08)}}
+  @keyframes pulse-orange{0%,100%{box-shadow:0 0 15px rgba(239,144,0,0.12),0 0 30px rgba(239,144,0,0.04)}50%{box-shadow:0 0 25px rgba(239,144,0,0.25),0 0 50px rgba(239,144,0,0.08)}}
+  @keyframes flow-dash{to{stroke-dashoffset:-20}}
+  .flow-line{animation:flow-dash 1.2s linear infinite}
+  @keyframes bar-fill{from{width:0}}
+  .slide--quote{justify-content:center;align-items:center;text-align:center;padding:clamp(60px,10vh,120px) clamp(60px,12vw,200px)}
+  .slide__quote-mark{font-size:clamp(100px,18vw,220px);line-height:0.5;opacity:0.06;font-family:Georgia,serif;pointer-events:none;margin-bottom:-20px;color:var(--gold)}
+  .slide--quote blockquote{font-family:var(--font-editorial);font-size:clamp(28px,5vw,52px);font-weight:500;line-height:1.3;font-style:italic}
+  .slide--quote cite{font-family:var(--font-mono);font-size:clamp(11px,1.4vw,14px);font-style:normal;margin-top:clamp(16px,3vh,32px);display:block;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+  .slide--divider{justify-content:center}
+  .slide--divider .slide__number{font-family:var(--font-display);font-size:clamp(160px,32vw,380px);font-weight:400;font-style:italic;line-height:0.85;opacity:0.04;position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none;background:linear-gradient(135deg,var(--gold) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .tag{font-family:var(--font-mono);font-size:0.68rem;font-weight:600;padding:0.22rem 0.6rem;border-radius:6px;display:inline-flex;align-items:center;gap:0.3rem}
+  .tag-accent{background:var(--accent-dim);color:var(--accent)}
+  .tag-silver{background:var(--silver-dim);color:var(--silver)}
+  .tag-gold{background:var(--gold-dim);color:var(--gold)}
+  .tag-blue{background:var(--blue-dim);color:var(--blue)}
+  .tag-green{background:var(--green-dim);color:var(--green)}
+  .tag-purple{background:var(--purple-dim);color:var(--purple)}
+  .tag-red{background:var(--red-dim);color:var(--red)}
+  .tag-orange{background:var(--orange-dim);color:var(--orange)}
+  .tag-cyan{background:var(--cyan-dim);color:var(--cyan)}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.5vw,16px);margin-top:clamp(12px,2vh,24px)}
+  .stats-row.cols-3{grid-template-columns:repeat(3,1fr)}
+  .stats-row.cols-5{grid-template-columns:repeat(5,1fr)}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;text-align:center;padding:clamp(14px,2.5vh,24px) clamp(10px,1.5vw,16px);transition:border-color 0.3s,transform 0.3s}
+  .stat-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+  .stat-val{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1;letter-spacing:-0.03em}
+  .stat-lbl{font-family:var(--font-mono);font-size:clamp(9px,1.1vw,12px);color:var(--text-dim);margin-top:0.3rem;text-transform:uppercase;letter-spacing:1.5px}
+  .tier-row{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5vw,18px);margin-top:clamp(14px,2.5vh,24px)}
+  .tier-row.cols-4{grid-template-columns:repeat(4,1fr)}
+  .tier-row.cols-5{grid-template-columns:repeat(5,1fr)}
+  .tier-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:clamp(18px,2.8vh,28px) clamp(14px,2vw,22px);display:flex;flex-direction:column;transition:transform 0.3s ease,border-color 0.3s}
+  .tier-card:hover{border-color:var(--border-bright);transform:translateY(-4px)}
+  .tier-card h4{font-family:var(--font-display);font-size:clamp(1.2rem,2vw,1.6rem);font-style:italic;margin-bottom:clamp(4px,0.5vh,6px)}
+  .tier-card .tier-sub{font-family:var(--font-mono);font-size:clamp(0.6rem,0.85vw,0.72rem);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:clamp(8px,1vh,12px)}
+  .tier-card p{font-size:clamp(0.78rem,1.1vw,0.88rem);color:var(--text-dim);line-height:1.5}
+  .bar-row{display:flex;align-items:center;gap:clamp(8px,1.2vw,14px);margin-bottom:clamp(8px,1.2vh,14px)}
+  .bar-label{font-family:var(--font-mono);font-size:clamp(0.68rem,0.9vw,0.8rem);color:var(--text-dim);width:clamp(90px,12vw,150px);flex-shrink:0;text-align:right}
+  .bar-track{flex:1;height:clamp(6px,0.8vh,10px);background:rgba(120,160,220,0.08);border-radius:99px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:99px;animation:bar-fill 1.2s cubic-bezier(0.4,0,0.2,1) both}
+  @keyframes bar-fill{from{width:0}}
+  .bar-val{font-family:var(--font-mono);font-size:clamp(0.68rem,0.9vw,0.8rem);color:var(--text-dim);width:clamp(40px,5vw,60px);flex-shrink:0}
+  .terminal{background:var(--code-bg);border:1px solid rgba(212,175,55,0.1);border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,0.4),inset 0 1px 0 rgba(212,175,55,0.03)}
+  .terminal__bar{background:var(--surface);padding:11px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+  .terminal__dot{width:11px;height:11px;border-radius:50%}
+  .terminal__body{padding:clamp(16px,2.5vh,24px) clamp(18px,2.5vw,24px);font-family:var(--font-mono);font-size:clamp(0.78rem,1.2vw,0.92rem);line-height:1.85;color:var(--code-text)}
+  .terminal__comment{color:var(--text-dim);font-style:italic}
+  .bottom-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:clamp(12px,1.8vh,18px) clamp(16px,2vw,24px);margin-top:auto}
+  .bottom-panel h4{font-family:var(--font-display);font-size:clamp(0.92rem,1.3vw,1.05rem);font-style:italic;color:var(--gold);margin-bottom:clamp(4px,0.5vh,6px)}
+  .bottom-panel p{font-size:clamp(0.78rem,1.1vw,0.88rem);color:var(--text-dim);line-height:1.55}
+  @media(max-width:768px){.tier-row,.tier-row.cols-4{grid-template-columns:1fr}.stats-row,.stats-row.cols-5{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="deck-progress" id="progress"></div>
+<nav class="deck-dots" id="dots"></nav>
+<div class="deck-counter" id="counter"></div>
+<div class="deck-hints" id="hints">&larr; &rarr; ou scroll</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="ah-gold" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#d4af37"/></marker>
+    <marker id="ah-blue" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#4a9eff"/></marker>
+    <marker id="ah-green" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#3fb950"/></marker>
+    <linearGradient id="grad-gold-blue" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#d4af37"/><stop offset="100%" stop-color="#4a9eff"/></linearGradient>
+    <linearGradient id="grad-blue-green" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4a9eff"/><stop offset="100%" stop-color="#3fb950"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="deck" id="deck">
+
+<!-- ================================================================ -->
+<!-- SLIDE 0 — TÍTULO                                                  -->
+<!-- ================================================================ -->
+<section class="slide slide--title">
+  <svg class="slide__decor" style="top:0;left:0" width="200" height="200" viewBox="0 0 200 200">
+    <line x1="0" y1="0" x2="0" y2="60" stroke="var(--gold)" stroke-width="2" opacity="0.12"/>
+    <line x1="0" y1="0" x2="60" y2="0" stroke="var(--gold)" stroke-width="2" opacity="0.12"/>
+  </svg>
+  <svg class="slide__decor" style="bottom:0;right:0" width="200" height="200" viewBox="0 0 200 200">
+    <line x1="200" y1="140" x2="200" y2="200" stroke="var(--accent)" stroke-width="2" opacity="0.12"/>
+    <line x1="140" y1="200" x2="200" y2="200" stroke="var(--accent)" stroke-width="2" opacity="0.12"/>
+  </svg>
+
+  <p class="slide__subtitle reveal" style="margin-bottom:clamp(8px,1.5vh,16px);letter-spacing:3px">
+    BÚSSOLA PÚBLICA &middot; PÓS-TECH XPERIUN &middot; 2026
+  </p>
+  <h1 class="slide__display reveal" style="font-size:clamp(44px,9vw,110px);font-style:italic">
+    O Congresso<br><span class="shimmer-text">em Dados</span>
+  </h1>
+  <div class="reveal" style="margin-top:clamp(12px,2vh,20px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(18px,2.8vw,30px);font-style:italic;color:var(--text-dim)">
+      Insights extraídos da Câmara dos Deputados com IA Generativa
+    </p>
+  </div>
+  <div class="reveal" style="margin-top:clamp(20px,3vh,32px);display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+    <span class="tag tag-gold">513 Deputados</span>
+    <span class="tag tag-accent">187k Despesas CEAP</span>
+    <span class="tag tag-green">100 Proposições com IA</span>
+    <span class="tag tag-silver">Dados Abertos da Câmara</span>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 1 — VISÃO GERAL DO DATASET                                  -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(212,175,55,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">DATASET &middot; VISÃO GERAL</p>
+  <h2 class="slide__heading reveal" style="font-size:clamp(32px,6vw,58px);font-style:italic">
+    O que foi <span style="color:var(--gold)">carregado</span>
+  </h2>
+
+  <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
+    <div class="stats-row cols-5">
+      <div class="stat-card" style="border-color:rgba(176,190,197,0.25)">
+        <div class="stat-val" style="color:var(--silver)">21</div>
+        <div class="stat-lbl">Partidos Políticos</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(74,158,255,0.25);animation:pulse-glow 4s ease-in-out infinite">
+        <div class="stat-val" style="color:var(--accent)">513</div>
+        <div class="stat-lbl">Deputados Federais</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(239,144,0,0.25)">
+        <div class="stat-val" style="color:var(--orange)">100</div>
+        <div class="stat-lbl">Proposições</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(212,175,55,0.25)">
+        <div class="stat-val" style="color:var(--gold)">100</div>
+        <div class="stat-lbl">Votações</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(63,185,80,0.25)">
+        <div class="stat-val" style="color:var(--green)">187k</div>
+        <div class="stat-lbl">Despesas CEAP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini pipeline mostrando origem dos dados -->
+  <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
+    <svg viewBox="0 0 900 100" width="100%" height="100" style="overflow:visible">
+      <rect x="10" y="25" width="180" height="50" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.25)" stroke-width="1.5"/>
+      <text x="100" y="52" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#d4af37">API Câmara</text>
+      <text x="100" y="68" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">dadosabertos.camara.leg.br</text>
+      <line x1="192" y1="50" x2="252" y2="50" stroke="url(#grad-gold-blue)" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-blue)"/>
+      <rect x="256" y="25" width="160" height="50" rx="10" fill="rgba(74,158,255,0.06)" stroke="rgba(74,158,255,0.2)" stroke-width="1.5"/>
+      <text x="336" y="52" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#4a9eff">ETL Pipeline</text>
+      <text x="336" y="68" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">pandas + SQLAlchemy</text>
+      <line x1="418" y1="50" x2="478" y2="50" stroke="url(#grad-blue-green)" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-green)"/>
+      <rect x="482" y="25" width="160" height="50" rx="10" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.2)" stroke-width="1.5"/>
+      <text x="562" y="52" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#3fb950">PostgreSQL</text>
+      <text x="562" y="68" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">Supabase + pgvector</text>
+      <line x1="644" y1="50" x2="704" y2="50" stroke="url(#grad-gold-blue)" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-gold)"/>
+      <rect x="708" y="25" width="180" height="50" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="1.5"/>
+      <text x="798" y="52" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#d4af37">IA Generativa</text>
+      <text x="798" y="68" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">GPT-4o-mini + embeddings</text>
+    </svg>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.95rem,1.6vw,1.2rem);font-style:italic;color:var(--text-dim);flex:1">
+      Dados referentes à <strong style="color:var(--text)">57ª Legislatura</strong> &mdash; deputados em exercício, proposições recentes e despesas do ano de 2025 (CEAP).
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-gold">57ª Legislatura</span>
+      <span class="tag tag-accent">CEAP 2025</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 2 — DIVIDER: OS PARLAMENTARES                               -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(74,158,255,0.06) 0%,transparent 50%)">
+  <div class="slide__number">01</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">CAPÍTULO 1 &middot; OS PARLAMENTARES</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    Quem representa <span style="color:var(--accent)">o Brasil</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    513 deputados de 21 partidos em 27 estados &mdash; perfil e distribuição.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 3 — DISTRIBUIÇÃO POR PARTIDO                                -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 30%,rgba(74,158,255,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">OS PARLAMENTARES &middot; PARTIDOS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Top 8 partidos por <span style="color:var(--accent)">cadeiras</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;margin-top:clamp(14px,2.5vh,24px);display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px)">
+    <!-- LEFT: barras horizontais -->
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="bar-row">
+        <span class="bar-label">PL</span>
+        <div class="bar-track"><div class="bar-fill" style="width:19.3%;background:linear-gradient(90deg,var(--accent),var(--accent));animation-delay:0.1s"></div></div>
+        <span class="bar-val" style="color:var(--accent)">99</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">União Brasil</span>
+        <div class="bar-track"><div class="bar-fill" style="width:11.5%;background:var(--silver);animation-delay:0.2s"></div></div>
+        <span class="bar-val" style="color:var(--silver)">59</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">PT</span>
+        <div class="bar-track"><div class="bar-fill" style="width:13.3%;background:var(--red);animation-delay:0.3s"></div></div>
+        <span class="bar-val" style="color:var(--red)">68</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">PP</span>
+        <div class="bar-track"><div class="bar-fill" style="width:9.2%;background:var(--orange);animation-delay:0.4s"></div></div>
+        <span class="bar-val" style="color:var(--orange)">47</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">PSD</span>
+        <div class="bar-track"><div class="bar-fill" style="width:8.2%;background:var(--gold);animation-delay:0.5s"></div></div>
+        <span class="bar-val" style="color:var(--gold)">42</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">MDB</span>
+        <div class="bar-track"><div class="bar-fill" style="width:8%;background:var(--green);animation-delay:0.6s"></div></div>
+        <span class="bar-val" style="color:var(--green)">41</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Republicanos</span>
+        <div class="bar-track"><div class="bar-fill" style="width:7%;background:var(--cyan);animation-delay:0.7s"></div></div>
+        <span class="bar-val" style="color:var(--cyan)">36</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">PDT</span>
+        <div class="bar-track"><div class="bar-fill" style="width:3.7%;background:var(--purple);animation-delay:0.8s"></div></div>
+        <span class="bar-val" style="color:var(--purple)">17</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: stats do perfil -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div class="stats-row cols-3" style="margin-top:0">
+        <div class="stat-card" style="border-color:rgba(74,158,255,0.2)">
+          <div class="stat-val" style="color:var(--accent);font-size:clamp(24px,3.5vw,40px)">21</div>
+          <div class="stat-lbl">Partidos</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+          <div class="stat-val" style="color:var(--gold);font-size:clamp(24px,3.5vw,40px)">27</div>
+          <div class="stat-lbl">Estados</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(176,190,197,0.2)">
+          <div class="stat-val" style="color:var(--silver);font-size:clamp(24px,3.5vw,40px)">513</div>
+          <div class="stat-lbl">Cadeiras</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);flex:1;animation:pulse-glow 5s ease-in-out infinite">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:10px">TOP ESTADOS POR DEPUTADOS</p>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--font-editorial);font-style:italic;font-size:clamp(0.85rem,1.2vw,1rem)">São Paulo</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--accent)">70 deputados</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--font-editorial);font-style:italic;font-size:clamp(0.85rem,1.2vw,1rem)">Minas Gerais</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--silver)">53 deputados</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--font-editorial);font-style:italic;font-size:clamp(0.85rem,1.2vw,1rem)">Rio de Janeiro</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--orange)">46 deputados</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--font-editorial);font-style:italic;font-size:clamp(0.85rem,1.2vw,1rem)">Bahia</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold)">39 deputados</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:var(--font-editorial);font-style:italic;font-size:clamp(0.85rem,1.2vw,1rem)">Rio Grande do Sul</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--green)">31 deputados</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      PL sozinho representa <strong style="color:var(--accent)">19,3%</strong> das cadeiras. Os 5 maiores partidos controlam <strong style="color:var(--text)">63%</strong> da Câmara.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">dim_partidos</span>
+      <span class="tag tag-silver">dim_deputados</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 4 — DIVIDER: GASTOS CEAP                                    -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(63,185,80,0.06) 0%,transparent 50%)">
+  <div class="slide__number">02</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">CAPÍTULO 2 &middot; GASTOS CEAP</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    O dinheiro <span style="color:var(--green)">público</span> em detalhes
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    Cota para Exercício da Atividade Parlamentar &mdash; ~187 mil registros de 2025.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 5 — CEAP: VISÃO GERAL + CATEGORIAS                          -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 70% 30%,rgba(63,185,80,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">GASTOS CEAP &middot; ANÁLISE</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    <span style="color:var(--green)">187 mil</span> registros de despesas
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(12px,2vh,20px)">
+    <!-- LEFT: stats gerais -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div class="stats-row cols-3" style="margin-top:0">
+        <div class="stat-card" style="border-color:rgba(63,185,80,0.25);animation:pulse-green 4s ease-in-out infinite">
+          <div class="stat-val" style="color:var(--green);font-size:clamp(22px,3vw,36px)">187k</div>
+          <div class="stat-lbl">Registros</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+          <div class="stat-val" style="color:var(--gold);font-size:clamp(22px,3vw,36px)">~R$45M</div>
+          <div class="stat-lbl">Total 2025</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(239,144,0,0.2)">
+          <div class="stat-val" style="color:var(--orange);font-size:clamp(22px,3vw,36px)">R$87k</div>
+          <div class="stat-lbl">Média/Deputado</div>
+        </div>
+      </div>
+
+      <!-- Categorias com barras -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:clamp(14px,2vh,20px);flex:1">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:12px">TOP CATEGORIAS DE GASTO</p>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Combustíveis</span>
+          <div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--accent);animation-delay:0.2s"></div></div>
+          <span class="bar-val">22%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Passagens Aéreas</span>
+          <div class="bar-track"><div class="bar-fill" style="width:18%;background:var(--gold);animation-delay:0.3s"></div></div>
+          <span class="bar-val">18%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Divulgação</span>
+          <div class="bar-track"><div class="bar-fill" style="width:15%;background:var(--orange);animation-delay:0.4s"></div></div>
+          <span class="bar-val">15%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Escritório</span>
+          <div class="bar-track"><div class="bar-fill" style="width:12%;background:var(--purple);animation-delay:0.5s"></div></div>
+          <span class="bar-val">12%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Alimentação</span>
+          <div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--green);animation-delay:0.6s"></div></div>
+          <span class="bar-val">10%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="font-size:0.72rem">Outros</span>
+          <div class="bar-track"><div class="bar-fill" style="width:23%;background:var(--silver);animation-delay:0.7s"></div></div>
+          <span class="bar-val">23%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: estrutura da tabela e insights -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div class="terminal">
+        <div class="terminal__bar">
+          <span class="terminal__dot" style="background:#f85149"></span>
+          <span class="terminal__dot" style="background:#febc2e"></span>
+          <span class="terminal__dot" style="background:#28c840"></span>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">SQL — fato_despesas</span>
+        </div>
+        <div class="terminal__body" style="font-size:clamp(0.68rem,0.9vw,0.8rem);line-height:1.65">
+          <p><span style="color:var(--purple)">SELECT</span></p>
+          <p>&nbsp;&nbsp;tipo_despesa,</p>
+          <p>&nbsp;&nbsp;<span style="color:var(--cyan)">COUNT</span>(*) <span style="color:var(--purple)">AS</span> registros,</p>
+          <p>&nbsp;&nbsp;<span style="color:var(--cyan)">SUM</span>(valor_liquido) <span style="color:var(--purple)">AS</span> total_r</p>
+          <p><span style="color:var(--purple)">FROM</span> fato_despesas</p>
+          <p><span style="color:var(--purple)">WHERE</span> ano = <span style="color:var(--gold)">2025</span></p>
+          <p><span style="color:var(--purple)">GROUP BY</span> tipo_despesa</p>
+          <p><span style="color:var(--purple)">ORDER BY</span> total_r <span style="color:var(--purple)">DESC</span>;</p>
+          <p>&nbsp;</p>
+          <p><span class="terminal__comment">-- PK: (cod_documento, parcela)</span></p>
+          <p><span class="terminal__comment">-- ~500 calls HTTP, ~20 min extração</span></p>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);flex:1">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">COTA MENSAL MÁXIMA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-bottom:8px">O teto da CEAP varia por estado: entre R$ 30.788 (DF) e R$ 45.612 (AM). Deputados que excedem têm reembolso negado.</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Nosso modelo preserva <code style="font-family:var(--font-mono);color:var(--text)">valor_liquido</code> (após glosas) para análise real.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      <strong style="color:var(--green)">Combustíveis</strong> lideram os gastos &mdash; deslocamentos entre Brasília e os estados de origem dos parlamentares.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-green">fato_despesas</span>
+      <span class="tag tag-silver">CEAP 2025</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 6 — DIVIDER: AS PROPOSIÇÕES                                 -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(239,144,0,0.06) 0%,transparent 50%)">
+  <div class="slide__number">03</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">CAPÍTULO 3 &middot; AS PROPOSIÇÕES</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    O que o Congresso <span style="color:var(--orange)">propõe</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    100 proposições classificadas por IA em 10 temas, com resumo executivo gerado por GPT-4o-mini.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 7 — PROPOSIÇÕES: TIPOS E CLASSIFICAÇÃO IA                   -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(239,144,0,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">PROPOSIÇÕES &middot; TIPOS &amp; IA</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    100 proposições, <span style="color:var(--orange)">10 temas</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(12px,2vh,20px);align-items:start">
+    <!-- LEFT: tipos de proposição -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
+      <div style="background:var(--surface);border:1px solid rgba(239,144,0,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--orange);font-weight:700;letter-spacing:0.1em;margin-bottom:12px">TIPOS DE PROPOSIÇÃO</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="text-align:center;padding:12px;background:rgba(239,144,0,0.06);border-radius:10px;border:1px solid rgba(239,144,0,0.15)">
+            <div style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;color:var(--orange)">PL</div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:4px">PROJETO DE LEI</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(74,158,255,0.06);border-radius:10px;border:1px solid rgba(74,158,255,0.15)">
+            <div style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;color:var(--accent)">PEC</div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:4px">EMENDA CONST.</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(212,175,55,0.06);border-radius:10px;border:1px solid rgba(212,175,55,0.15)">
+            <div style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;color:var(--gold)">MPV</div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:4px">MEDIDA PROVISÓRIA</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:rgba(176,190,197,0.06);border-radius:10px;border:1px solid rgba(176,190,197,0.15)">
+            <div style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:800;color:var(--silver)">REQ</div>
+            <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);margin-top:4px">REQUERIMENTO</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- embedding / busca semântica -->
+      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">BUSCA SEMÂNTICA HABILITADA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Cada proposição tem um vetor 1.536-d via <code style="font-family:var(--font-mono);color:var(--text)">text-embedding-ada-002</code>. Busca por similaridade com operador <code style="font-family:var(--font-mono);color:var(--gold)">&lt;=&gt;</code>.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT: temas por IA -->
+    <div style="display:flex;flex-direction:column;gap:clamp(8px,1.2vh,12px)">
+      <div style="background:var(--surface);border:1px solid rgba(239,144,0,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-orange 4s ease-in-out infinite">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--orange);font-weight:700;letter-spacing:0.1em;margin-bottom:12px">TEMAS CLASSIFICADOS POR GPT-4o-mini</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(74,158,255,0.06);border:1px solid rgba(74,158,255,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent);font-weight:700">Educação</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">12</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(63,185,80,0.06);border:1px solid rgba(63,185,80,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--green);font-weight:700">Saúde</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">18</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(248,81,73,0.06);border:1px solid rgba(248,81,73,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--red);font-weight:700">Segurança</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">9</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(239,144,0,0.06);border:1px solid rgba(239,144,0,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--orange);font-weight:700">Economia</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">15</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--purple);font-weight:700">Dir. Humanos</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">11</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(34,211,238,0.06);border:1px solid rgba(34,211,238,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--cyan);font-weight:700">Meio Ambiente</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">8</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--gold);font-weight:700">Previdência</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">7</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--blue);font-weight:700">Tecnologia</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">6</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(176,190,197,0.06);border:1px solid rgba(176,190,197,0.15);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--silver);font-weight:700">Infraestrutura</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">8</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(120,160,220,0.06);border:1px solid rgba(120,160,220,0.1);border-radius:8px;padding:6px 10px">
+            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text-dim);font-weight:700">Outros</span>
+            <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-dim)">6</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Destaque: saúde domina -->
+      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-display);font-size:clamp(1.8rem,3vw,2.4rem);font-style:italic;color:var(--green);line-height:1">Saúde lidera</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-top:4px">18% das proposições tratam de saúde pública &mdash; o tema mais legislado no período analisado.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim)">Custo de classificação: ~$0.001 por proposição. 100 proposições = ~$0.10 no total.</p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-orange">fato_proposicoes</span>
+      <span class="tag tag-gold">GPT-4o-mini</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 8 — RESUMO EXECUTIVO GERADO PELA IA                         -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 80% 20%,rgba(212,175,55,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">PROPOSIÇÕES &middot; IA EM AÇÃO</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Resumo <span style="color:var(--gold)">executivo</span> gerado automaticamente
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(12px,2vh,20px);align-items:start">
+
+    <!-- LEFT: input (ementa bruta) -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
+      <div style="background:var(--surface);border:1px solid rgba(176,190,197,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--silver);font-weight:700;letter-spacing:0.1em;margin-bottom:10px">INPUT &mdash; EMENTA BRUTA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);line-height:1.6">
+          "Altera a Lei nº 9.394, de 20 de dezembro de 1996, que estabelece as diretrizes e bases da educação nacional, para incluir no currículo obrigatório da educação básica o ensino de programação e pensamento computacional."
+        </p>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-accent">PL 2847/2024</span>
+          <span class="tag tag-accent">Educação</span>
+          <span class="tag tag-silver">Em tramitação</span>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(239,144,0,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--orange);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PROMPT ENVIADO</p>
+        <div style="font-family:var(--font-mono);font-size:clamp(0.68rem,0.88vw,0.78rem);color:var(--code-text);line-height:1.6;background:var(--code-bg);border-radius:8px;padding:10px">
+          Você é um analista parlamentar.<br>
+          Resuma a proposição abaixo em 3 seções:<br>
+          <span style="color:var(--gold)">**Contexto**</span>, <span style="color:var(--green)">**Posições**</span>, <span style="color:var(--orange)">**Impacto**</span>.<br><br>
+          Proposição: {ementa}<br>
+          Use linguagem acessível ao cidadão.
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: output (resumo gerado) -->
+    <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.25);border-radius:14px;padding:clamp(16px,2.5vh,28px);animation:pulse-green 5s ease-in-out infinite">
+      <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:14px">OUTPUT &mdash; RESUMO GERADO &nbsp;<span style="color:var(--text-dim)">GPT-4o-mini</span></p>
+
+      <div style="margin-bottom:14px">
+        <p style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:var(--gold);margin-bottom:4px">CONTEXTO</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);line-height:1.55">Propõe incluir programação como disciplina obrigatória na educação básica (ensino fundamental e médio), alterando a LDB de 1996.</p>
+      </div>
+
+      <div style="margin-bottom:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <p style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:var(--accent);margin-bottom:6px">POSIÇÕES</p>
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+          <span class="tag tag-green" style="flex-shrink:0;margin-top:2px">Favorável</span>
+          <p style="font-family:var(--font-editorial);font-size:clamp(0.82rem,1.1vw,0.95rem);font-style:italic;color:var(--text-dim);line-height:1.45">Preparação para mercado de trabalho digital, redução de desigualdade tecnológica.</p>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px">
+          <span class="tag tag-red" style="flex-shrink:0;margin-top:2px">Contrário</span>
+          <p style="font-family:var(--font-editorial);font-size:clamp(0.82rem,1.1vw,0.95rem);font-style:italic;color:var(--text-dim);line-height:1.45">Custo de formação de professores, infraestrutura necessária nas escolas públicas.</p>
+        </div>
+      </div>
+
+      <div style="padding-top:14px;border-top:1px solid var(--border)">
+        <p style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:var(--orange);margin-bottom:4px">IMPACTO POTENCIAL</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);line-height:1.55">Afeta ~48 milhões de estudantes da educação básica pública e privada. Demanda capacitação de ~2,2 milhões de professores.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Prompt versionado em <code style="font-family:var(--font-mono);color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px">src/ai/prompts/resumo_executivo.md</code> &mdash; rastreável no git como qualquer código.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-gold">Prompt versionado</span>
+      <span class="tag tag-green">Markdown estruturado</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 9 — DIVIDER: AS VOTAÇÕES                                    -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(167,139,250,0.06) 0%,transparent 50%)">
+  <div class="slide__number">04</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">CAPÍTULO 4 &middot; AS VOTAÇÕES</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    Como o Congresso <span style="color:var(--purple)">decide</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    100 votações carregadas &mdash; nominais e simbólicas, com resultado e data.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 10 — VOTAÇÕES                                               -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 70%,rgba(167,139,250,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">VOTAÇÕES &middot; PADRÕES</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Nominal vs. <span style="color:var(--purple)">Simbólica</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1fr 1.2fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(12px,2vh,20px);align-items:start">
+    <!-- LEFT: Stats e tipos -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div class="stats-row cols-3" style="margin-top:0">
+        <div class="stat-card" style="border-color:rgba(167,139,250,0.25);animation:pulse-glow 4s ease-in-out infinite">
+          <div class="stat-val" style="color:var(--purple);font-size:clamp(24px,3.5vw,40px)">100</div>
+          <div class="stat-lbl">Votações</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(63,185,80,0.2)">
+          <div class="stat-val" style="color:var(--green);font-size:clamp(22px,3vw,34px)">~65%</div>
+          <div class="stat-lbl">Aprovadas</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(248,81,73,0.2)">
+          <div class="stat-val" style="color:var(--red);font-size:clamp(22px,3vw,34px)">~35%</div>
+          <div class="stat-lbl">Rejeitadas</div>
+        </div>
+      </div>
+
+      <!-- Tipos de votação -->
+      <div style="background:var(--surface);border:1px solid rgba(167,139,250,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--purple);font-weight:700;letter-spacing:0.1em;margin-bottom:10px">TIPOS DE VOTAÇÃO</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.15);border-radius:10px;padding:12px">
+            <p style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:var(--purple);margin-bottom:4px">NOMINAL</p>
+            <p style="font-family:var(--font-editorial);font-size:clamp(0.82rem,1.1vw,0.95rem);font-style:italic;color:var(--text-dim);line-height:1.45">Cada deputado vota individualmente &mdash; voto registrado por nome. Obrigatório para PECs e votações polêmicas. Permite accountability.</p>
+          </div>
+          <div style="background:rgba(176,190,197,0.06);border:1px solid rgba(176,190,197,0.12);border-radius:10px;padding:12px">
+            <p style="font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:var(--silver);margin-bottom:4px">SIMBÓLICA</p>
+            <p style="font-family:var(--font-editorial);font-size:clamp(0.82rem,1.1vw,0.95rem);font-style:italic;color:var(--text-dim);line-height:1.45">Aprovação por aclamação &mdash; sem registro individual. Usado para matérias de menor controvérsia. Mais rápido.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: estrutura + próximas evoluções -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
+      <div class="terminal">
+        <div class="terminal__bar">
+          <span class="terminal__dot" style="background:#f85149"></span>
+          <span class="terminal__dot" style="background:#febc2e"></span>
+          <span class="terminal__dot" style="background:#28c840"></span>
+          <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">fato_votacoes</span>
+        </div>
+        <div class="terminal__body" style="font-size:clamp(0.68rem,0.9vw,0.8rem);line-height:1.7">
+          <p><span style="color:var(--purple)">SELECT</span></p>
+          <p>&nbsp;&nbsp;resultado,</p>
+          <p>&nbsp;&nbsp;<span style="color:var(--cyan)">COUNT</span>(*) <span style="color:var(--purple)">AS</span> total</p>
+          <p><span style="color:var(--purple)">FROM</span> fato_votacoes</p>
+          <p><span style="color:var(--purple)">GROUP BY</span> resultado;</p>
+          <p>&nbsp;</p>
+          <p><span class="terminal__comment">-- resultado</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="terminal__comment">| total</span></p>
+          <p><span style="color:var(--green)">Aprovado</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--green)">| 65</span></p>
+          <p><span style="color:var(--red)">Rejeitado</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--red)">| 28</span></p>
+          <p><span style="color:var(--silver)">Encerrado sem votação</span><span style="color:var(--silver)">| 7</span></p>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PRÓXIMA EVOLUÇÃO (SPRINT 4)</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);line-height:1.5">
+          Votos individuais por deputado &mdash; análise de coerência partidária, quem vota diferente do partido e cruzamento com posições das lideranças.
+        </p>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <span class="tag tag-gold">fato_votos_deputados</span>
+          <span class="tag tag-silver">Em planejamento</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Votações nominais permitem cruzar com o perfil do deputado &mdash; partido, estado, bancada &mdash; para análise de coalização.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-purple">fato_votacoes</span>
+      <span class="tag tag-silver">votacao_id (PK)</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 11 — PRÓXIMOS PASSOS                                        -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(212,175,55,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">HORIZONTE &middot; O QUE VEM ADIANTE</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    De pipeline a <span style="color:var(--gold)">produto</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5vw,18px);margin-top:clamp(14px,2.5vh,24px);align-items:start">
+    <div class="tier-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+      <h4 style="color:var(--accent)">Dashboard Público</h4>
+      <div class="tier-sub" style="color:var(--accent)">Curto Prazo</div>
+      <p>Interface web para explorar deputados, gastos CEAP e proposições com busca semântica. Acessível ao cidadão sem SQL.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(212,175,55,0.2)">
+      <h4 style="color:var(--gold)">n8n Automation</h4>
+      <div class="tier-sub" style="color:var(--gold)">Curto Prazo</div>
+      <p>Alertas automáticos para votações importantes. Resumo semanal por email. Pipeline diário via n8n Cloud.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(63,185,80,0.2)">
+      <h4 style="color:var(--green)">Análise de Coerência</h4>
+      <div class="tier-sub" style="color:var(--green)">Médio Prazo</div>
+      <p>Votos individuais por deputado. Score de fidelidade partidária. Quem vota com a oposição &mdash; e quando.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(167,139,250,0.2)">
+      <h4 style="color:var(--purple)">Histórico Legislativo</h4>
+      <div class="tier-sub" style="color:var(--purple)">Médio Prazo</div>
+      <p>Séries temporais de proposições por tema. Evolução dos gastos CEAP por legislatura. Sazonalidade parlamentar.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(239,144,0,0.2)">
+      <h4 style="color:var(--orange)">RAG Parlamentar</h4>
+      <div class="tier-sub" style="color:var(--orange)">Médio Prazo</div>
+      <p>Chatbot que responde "quais deputados votaram a favor da reforma tributária?" &mdash; RAG sobre fato_votacoes + proposições.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(34,211,238,0.2)">
+      <h4 style="color:var(--cyan)">Open API</h4>
+      <div class="tier-sub" style="color:var(--cyan)">Longo Prazo</div>
+      <p>Endpoints públicos para jornalistas e pesquisadores. Dados estruturados + enriquecidos por IA, acessíveis via REST.</p>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(10px,1.5vh,18px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim)">O pipeline já está ao vivo. O produto ainda está nascendo.</p>
+    <div style="display:flex;gap:0.5rem">
+      <span class="tag tag-gold">n8n</span>
+      <span class="tag tag-accent">RAG</span>
+      <span class="tag tag-green">Open Data</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 12 — CLOSING QUOTE                                          -->
+<!-- ================================================================ -->
+<section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 30%,rgba(212,175,55,0.06) 0%,transparent 60%)">
+  <div class="slide__quote-mark reveal">&ldquo;</div>
+  <blockquote class="reveal" style="color:var(--text)">
+    Dados abertos são o<br><span class="gradient-text">começo da conversa.</span>
+  </blockquote>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(16px,2vw,22px);font-style:italic;color:var(--text-dim);margin-top:clamp(16px,3vh,28px);max-width:640px;margin-left:auto;margin-right:auto;line-height:1.6">
+    513 deputados, 187 mil despesas, 100 proposições enriquecidas por IA &mdash; o Congresso nunca foi tão legível para o cidadão comum.
+  </p>
+  <cite class="reveal">Bússola Pública &middot; Pós-Tech Engenharia de Dados Xperiun &middot; 2026</cite>
+  <div class="reveal" style="margin-top:clamp(20px,3vh,32px);display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+    <span class="tag tag-gold">dadosabertos.camara.leg.br</span>
+    <span class="tag tag-accent">Supabase ao vivo</span>
+    <span class="tag tag-green">Pipeline open source</span>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<script>
+class SlideEngine {
+  constructor() {
+    this.deck = document.getElementById('deck');
+    this.slides = [...document.querySelectorAll('.slide')];
+    this.dots = document.getElementById('dots');
+    this.progress = document.getElementById('progress');
+    this.counter = document.getElementById('counter');
+    this.hints = document.getElementById('hints');
+    this.total = this.slides.length;
+    this.current = 0;
+
+    this.slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'deck-dot';
+      d.setAttribute('aria-label', 'Ir para slide ' + (i + 1));
+      d.addEventListener('click', () => this.goTo(i));
+      this.dots.appendChild(d);
+    });
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          this.current = this.slides.indexOf(e.target);
+          this.updateChrome();
+        }
+      });
+    }, { root: this.deck, threshold: 0.5 });
+
+    this.slides.forEach(s => obs.observe(s));
+
+    document.addEventListener('keydown', e => {
+      if (['ArrowDown','ArrowRight','Space','PageDown'].includes(e.code)) { e.preventDefault(); this.next(); }
+      if (['ArrowUp','ArrowLeft','PageUp'].includes(e.code)) { e.preventDefault(); this.prev(); }
+      if (e.code === 'Home') { e.preventDefault(); this.goTo(0); }
+      if (e.code === 'End') { e.preventDefault(); this.goTo(this.total - 1); }
+    });
+
+    let touchY = 0;
+    this.deck.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+    this.deck.addEventListener('touchend', e => {
+      const dy = touchY - e.changedTouches[0].clientY;
+      if (Math.abs(dy) > 50) dy > 0 ? this.next() : this.prev();
+    }, { passive: true });
+
+    setTimeout(() => this.hints.classList.add('faded'), 4000);
+    this.updateChrome();
+    if (this.slides[0]) this.slides[0].classList.add('visible');
+  }
+
+  goTo(i) { this.slides[i]?.scrollIntoView({ behavior: 'smooth' }); }
+  next() { this.goTo(Math.min(this.current + 1, this.total - 1)); }
+  prev() { this.goTo(Math.max(this.current - 1, 0)); }
+
+  updateChrome() {
+    const pct = ((this.current + 1) / this.total) * 100;
+    this.progress.style.width = pct + '%';
+    this.counter.textContent = (this.current + 1) + ' / ' + this.total;
+    [...this.dots.children].forEach((d, i) => d.classList.toggle('active', i === this.current));
+  }
+}
+new SlideEngine();
+</script>
+</body>
+</html>

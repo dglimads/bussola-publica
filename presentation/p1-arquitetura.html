@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bússola Pública — Arquitetura | Pós-Tech Engenharia de Dados Xperiun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: 'Instrument Serif', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-editorial: 'Newsreader', 'Georgia', serif;
+    --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
+    --bg: #08080a; --surface: #111114; --surface2: #19191e; --surface-elevated: #222228;
+    --border: rgba(120,160,220,0.08); --border-bright: rgba(120,160,220,0.18);
+    --text: #eaedf2; --text-dim: #6e7a8c;
+    --accent: #4a9eff; --accent-dim: rgba(74,158,255,0.10); --accent2: #3d8ae6;
+    --silver: #b0bec5; --silver-bright: #cfd8dc; --silver-dim: rgba(176,190,197,0.10);
+    --gold: #d4af37; --gold-dim: rgba(212,175,55,0.10);
+    --orange: #ef9000; --orange-dim: rgba(239,144,0,0.10);
+    --green: #3fb950; --green-dim: rgba(63,185,80,0.10);
+    --red: #f85149; --red-dim: rgba(248,81,73,0.10);
+    --blue: #60a5fa; --blue-dim: rgba(96,165,250,0.10);
+    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.10);
+    --cyan: #22d3ee; --cyan-dim: rgba(34,211,238,0.10);
+    --code-bg: #060608; --code-text: #c8d0dc;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font-body); color:var(--text); background:var(--bg); overflow:hidden; }
+  body::after { content:''; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.035;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); }
+  .deck { height:100dvh; overflow-y:auto; scroll-snap-type:y mandatory; scroll-behavior:smooth; }
+  .slide { height:100dvh; scroll-snap-align:start; overflow:hidden; position:relative;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:clamp(32px,5vh,64px) clamp(36px,6vw,96px);
+    isolation:isolate; opacity:0; transform:translateY(40px) scale(0.98);
+    transition:opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+  .slide.visible { opacity:1; transform:none; }
+  .slide .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1); }
+  .slide.visible .reveal { opacity:1; transform:none; }
+  .slide.visible .reveal:nth-child(1){transition-delay:0.1s}
+  .slide.visible .reveal:nth-child(2){transition-delay:0.2s}
+  .slide.visible .reveal:nth-child(3){transition-delay:0.3s}
+  .slide.visible .reveal:nth-child(4){transition-delay:0.4s}
+  .slide.visible .reveal:nth-child(5){transition-delay:0.5s}
+  .slide.visible .reveal:nth-child(6){transition-delay:0.6s}
+  .slide.visible .reveal:nth-child(7){transition-delay:0.7s}
+  .slide.visible .reveal:nth-child(8){transition-delay:0.8s}
+  @media(prefers-reduced-motion:reduce){.slide,.slide .reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  .deck-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--silver));z-index:100;transition:width 0.3s ease;pointer-events:none}
+  .deck-dots{position:fixed;right:clamp(12px,2vw,24px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;padding:8px;background:rgba(8,8,10,0.6);border-radius:20px;backdrop-filter:blur(4px)}
+  .deck-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);opacity:0.3;border:none;padding:0;cursor:pointer;transition:opacity 0.2s,transform 0.2s}
+  .deck-dot:hover{opacity:0.6}
+  .deck-dot.active{opacity:1;transform:scale(1.5);background:var(--accent)}
+  .deck-counter{position:fixed;bottom:clamp(12px,2vh,24px);right:clamp(12px,2vw,24px);font-family:var(--font-mono);font-size:12px;color:var(--text-dim);z-index:100}
+  .deck-hints{position:fixed;bottom:clamp(12px,2vh,24px);left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:11px;color:var(--text-dim);opacity:0.6;z-index:100;transition:opacity 0.5s}
+  .deck-hints.faded{opacity:0;pointer-events:none}
+  .slide__display{font-family:var(--font-display);font-size:clamp(56px,12vw,140px);font-weight:400;letter-spacing:-1px;line-height:0.92}
+  .slide__heading{font-family:var(--font-display);font-size:clamp(36px,7vw,72px);font-weight:400;letter-spacing:-0.5px;line-height:1.1}
+  .slide__body{font-family:var(--font-editorial);font-size:clamp(19px,2.6vw,26px);font-weight:400;line-height:1.6;color:var(--text-dim);letter-spacing:0.01em}
+  .slide__subtitle{font-family:var(--font-mono);font-size:clamp(13px,1.7vw,18px);color:var(--text-dim);letter-spacing:2px;text-transform:uppercase}
+  .slide__label{font-family:var(--font-mono);font-size:clamp(12px,1.4vw,15px);font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--accent);margin-bottom:16px}
+  .slide__decor{position:absolute;pointer-events:none;z-index:0}
+  .gradient-text{background:linear-gradient(135deg,var(--accent) 0%,var(--silver-bright) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .slide--title{justify-content:center;align-items:center;text-align:center;background-image:radial-gradient(ellipse at 50% 20%,rgba(74,158,255,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(176,190,197,0.03) 0%,transparent 40%)}
+  @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .shimmer-text{background:linear-gradient(135deg,var(--accent) 0%,#ffffff 30%,var(--silver-bright) 60%,var(--accent) 100%);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 6s ease infinite}
+  @keyframes flow-right{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
+  .flow-r{stroke-dasharray:12 12;animation:flow-right 1.2s linear infinite}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 15px rgba(74,158,255,0.12),0 0 30px rgba(74,158,255,0.04)}50%{box-shadow:0 0 25px rgba(74,158,255,0.25),0 0 50px rgba(74,158,255,0.08)}}
+  @keyframes pulse-gold{0%,100%{box-shadow:0 0 15px rgba(212,175,55,0.12),0 0 30px rgba(212,175,55,0.04)}50%{box-shadow:0 0 25px rgba(212,175,55,0.25),0 0 50px rgba(212,175,55,0.08)}}
+  @keyframes pulse-green{0%,100%{box-shadow:0 0 15px rgba(63,185,80,0.12),0 0 30px rgba(63,185,80,0.04)}50%{box-shadow:0 0 25px rgba(63,185,80,0.25),0 0 50px rgba(63,185,80,0.08)}}
+  @keyframes pulse-orange{0%,100%{box-shadow:0 0 15px rgba(239,144,0,0.12),0 0 30px rgba(239,144,0,0.04)}50%{box-shadow:0 0 25px rgba(239,144,0,0.25),0 0 50px rgba(239,144,0,0.08)}}
+  @keyframes flow-dash{to{stroke-dashoffset:-20}}
+  .flow-line{animation:flow-dash 1.2s linear infinite}
+  @keyframes bar-fill{from{width:0}}
+  .slide--quote{justify-content:center;align-items:center;text-align:center;padding:clamp(60px,10vh,120px) clamp(60px,12vw,200px)}
+  .slide__quote-mark{font-size:clamp(100px,18vw,220px);line-height:0.5;opacity:0.06;font-family:Georgia,serif;pointer-events:none;margin-bottom:-20px;color:var(--accent)}
+  .slide--quote blockquote{font-family:var(--font-editorial);font-size:clamp(28px,5vw,52px);font-weight:500;line-height:1.3;font-style:italic}
+  .slide--quote cite{font-family:var(--font-mono);font-size:clamp(11px,1.4vw,14px);font-style:normal;margin-top:clamp(16px,3vh,32px);display:block;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+  .slide--divider{justify-content:center}
+  .slide--divider .slide__number{font-family:var(--font-display);font-size:clamp(160px,32vw,380px);font-weight:400;font-style:italic;line-height:0.85;opacity:0.04;position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none;background:linear-gradient(135deg,var(--accent) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .tag{font-family:var(--font-mono);font-size:0.68rem;font-weight:600;padding:0.22rem 0.6rem;border-radius:6px;display:inline-flex;align-items:center;gap:0.3rem}
+  .tag-accent{background:var(--accent-dim);color:var(--accent)}
+  .tag-silver{background:var(--silver-dim);color:var(--silver)}
+  .tag-gold{background:var(--gold-dim);color:var(--gold)}
+  .tag-blue{background:var(--blue-dim);color:var(--blue)}
+  .tag-green{background:var(--green-dim);color:var(--green)}
+  .tag-purple{background:var(--purple-dim);color:var(--purple)}
+  .tag-red{background:var(--red-dim);color:var(--red)}
+  .tag-orange{background:var(--orange-dim);color:var(--orange)}
+  .tag-cyan{background:var(--cyan-dim);color:var(--cyan)}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.5vw,16px);margin-top:clamp(12px,2vh,24px)}
+  .stats-row.cols-3{grid-template-columns:repeat(3,1fr)}
+  .stats-row.cols-5{grid-template-columns:repeat(5,1fr)}
+  .stats-row.cols-6{grid-template-columns:repeat(6,1fr)}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;text-align:center;padding:clamp(14px,2.5vh,24px) clamp(10px,1.5vw,16px);transition:border-color 0.3s,transform 0.3s}
+  .stat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .stat-val{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1;letter-spacing:-0.03em}
+  .stat-lbl{font-family:var(--font-mono);font-size:clamp(9px,1.1vw,12px);color:var(--text-dim);margin-top:0.3rem;text-transform:uppercase;letter-spacing:1.5px}
+  .pipeline-vertical{display:flex;flex-direction:column;gap:0;margin-top:clamp(12px,2vh,24px)}
+  .pipeline-stage{display:grid;grid-template-columns:90px 1fr;gap:0;position:relative}
+  .pipeline-connector{display:flex;flex-direction:column;align-items:center;padding-top:0.35rem}
+  .pipeline-dot{width:18px;height:18px;border-radius:50%;border:3px solid;flex-shrink:0;position:relative;z-index:1}
+  .pipeline-line{width:3px;flex:1;min-height:20px}
+  .pipeline-stage-content{padding:0 0 clamp(0.75rem,1.5vh,1.25rem) 0}
+  .pipeline-stage-content .session-title{font-family:var(--font-display);font-size:clamp(1.3rem,2.8vw,1.8rem);font-style:italic;font-weight:400}
+  .pipeline-stage-content .session-desc{font-family:var(--font-editorial);font-size:clamp(0.88rem,1.5vw,1.05rem);font-style:italic;color:var(--text-dim);line-height:1.5;margin-top:0.15rem}
+  .phase-flow{display:flex;gap:0;align-items:stretch;margin-top:1.25rem;width:100%}
+  .phase-card{flex:1;padding:clamp(1.2rem,2.5vh,1.8rem) clamp(1rem,1.5vw,1.4rem);text-align:center;border-radius:14px;background:var(--surface);border:1px solid var(--border);margin:0 5px;transition:transform 0.3s,box-shadow 0.3s,border-color 0.3s}
+  .phase-card:hover{border-color:var(--border-bright);transform:translateY(-3px)}
+  .phase-num{font-family:var(--font-display);font-size:clamp(1.1rem,1.8vw,1.4rem);font-weight:400;font-style:italic;letter-spacing:0.02em;margin-bottom:0.3rem}
+  .phase-name{font-family:var(--font-mono);font-size:clamp(0.72rem,1vw,0.82rem);font-weight:600;margin-bottom:0.3rem;letter-spacing:0.04em}
+  .phase-desc{font-family:var(--font-editorial);font-size:clamp(0.7rem,0.95vw,0.8rem);font-style:italic;color:var(--text-dim);line-height:1.4}
+  .phase-connector{display:flex;align-items:center;color:var(--text-dim);font-size:1.2rem;flex-shrink:0;padding:0 0.25rem}
+  .terminal{background:var(--code-bg);border:1px solid rgba(74,158,255,0.1);border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,0.4),inset 0 1px 0 rgba(74,158,255,0.03)}
+  .terminal__bar{background:var(--surface);padding:11px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+  .terminal__dot{width:11px;height:11px;border-radius:50%}
+  .terminal__body{padding:clamp(16px,2.5vh,24px) clamp(18px,2.5vw,24px);font-family:var(--font-mono);font-size:clamp(0.78rem,1.2vw,0.92rem);line-height:1.85;color:var(--code-text)}
+  .terminal__prompt{color:var(--accent);font-weight:600}
+  .terminal__comment{color:var(--text-dim);font-style:italic}
+  .method-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(16px,3vh,28px)}
+  .method-panel{background:var(--surface);border-radius:16px;padding:clamp(20px,3vh,32px);position:relative;overflow:hidden}
+  .method-panel h3{font-family:var(--font-mono);font-size:clamp(0.68rem,1vw,0.78rem);font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:clamp(10px,1.5vh,16px)}
+  .bottom-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:clamp(12px,1.8vh,18px) clamp(16px,2vw,24px);margin-top:auto}
+  .bottom-panel h4{font-family:var(--font-display);font-size:clamp(0.92rem,1.3vw,1.05rem);font-style:italic;color:var(--accent);margin-bottom:clamp(4px,0.5vh,6px)}
+  .bottom-panel p{font-size:clamp(0.78rem,1.1vw,0.88rem);color:var(--text-dim);line-height:1.55}
+  .tier-row{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,1.5vw,18px);margin-top:clamp(14px,2.5vh,24px)}
+  .tier-row.cols-4{grid-template-columns:repeat(4,1fr)}
+  .tier-row.cols-5{grid-template-columns:repeat(5,1fr)}
+  .tier-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:clamp(18px,2.8vh,28px) clamp(14px,2vw,22px);display:flex;flex-direction:column;transition:transform 0.3s ease,border-color 0.3s}
+  .tier-card:hover{border-color:var(--border-bright);transform:translateY(-4px)}
+  .tier-card h4{font-family:var(--font-display);font-size:clamp(1.2rem,2vw,1.6rem);font-style:italic;margin-bottom:clamp(4px,0.5vh,6px)}
+  .tier-card .tier-sub{font-family:var(--font-mono);font-size:clamp(0.6rem,0.85vw,0.72rem);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:clamp(8px,1vh,12px)}
+  .tier-card p{font-size:clamp(0.78rem,1.1vw,0.88rem);color:var(--text-dim);line-height:1.5}
+  .content-center-wrap{display:flex;flex-direction:column;flex:1;gap:clamp(10px,1.5vh,16px)}
+  @media(max-width:768px){.method-grid,.tier-row,.tier-row.cols-4{grid-template-columns:1fr}.stats-row,.stats-row.cols-5{grid-template-columns:repeat(2,1fr)}.phase-flow{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="deck-progress" id="progress"></div>
+<nav class="deck-dots" id="dots"></nav>
+<div class="deck-counter" id="counter"></div>
+<div class="deck-hints" id="hints">&larr; &rarr; ou scroll</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow-strong"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="ah-blue" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#4a9eff"/></marker>
+    <marker id="ah-silver" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#b0bec5"/></marker>
+    <marker id="ah-gold" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#d4af37"/></marker>
+    <marker id="ah-green" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#3fb950"/></marker>
+    <marker id="ah-orange" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#ef9000"/></marker>
+    <linearGradient id="flow-grad-1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4a9eff"/><stop offset="100%" stop-color="#b0bec5"/></linearGradient>
+    <linearGradient id="flow-grad-2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#b0bec5"/><stop offset="100%" stop-color="#d4af37"/></linearGradient>
+  </defs>
+</svg>
+
+<div class="deck" id="deck">
+
+<!-- ================================================================ -->
+<!-- SLIDE 0 — TÍTULO                                                  -->
+<!-- ================================================================ -->
+<section class="slide slide--title">
+  <svg class="slide__decor" style="top:0;left:0" width="200" height="200" viewBox="0 0 200 200">
+    <line x1="0" y1="0" x2="0" y2="60" stroke="var(--accent)" stroke-width="2" opacity="0.12"/>
+    <line x1="0" y1="0" x2="60" y2="0" stroke="var(--accent)" stroke-width="2" opacity="0.12"/>
+  </svg>
+  <svg class="slide__decor" style="bottom:0;right:0" width="200" height="200" viewBox="0 0 200 200">
+    <line x1="200" y1="140" x2="200" y2="200" stroke="var(--silver)" stroke-width="2" opacity="0.12"/>
+    <line x1="140" y1="200" x2="200" y2="200" stroke="var(--silver)" stroke-width="2" opacity="0.12"/>
+  </svg>
+
+  <!-- Compass icon decorativo -->
+  <div class="reveal" style="margin-bottom:clamp(16px,2.5vh,28px)">
+    <svg width="clamp(48px,6vw,72px)" height="clamp(48px,6vw,72px)" viewBox="0 0 72 72" fill="none">
+      <circle cx="36" cy="36" r="34" stroke="rgba(74,158,255,0.2)" stroke-width="1.5"/>
+      <circle cx="36" cy="36" r="24" stroke="rgba(74,158,255,0.1)" stroke-width="1"/>
+      <polygon points="36,10 42,36 36,34 30,36" fill="#4a9eff" opacity="0.9" filter="url(#glow)"/>
+      <polygon points="36,62 30,36 36,38 42,36" fill="#b0bec5" opacity="0.7"/>
+      <circle cx="36" cy="36" r="3" fill="#4a9eff"/>
+    </svg>
+  </div>
+
+  <p class="slide__subtitle reveal" style="margin-bottom:clamp(8px,1.5vh,16px);letter-spacing:3px">
+    PÓS-TECH ENGENHARIA DE DADOS &middot; XPERIUN &middot; 2026
+  </p>
+  <h1 class="slide__display reveal" style="font-size:clamp(52px,11vw,128px);font-style:italic">
+    <span class="shimmer-text">Bússola</span><br>Pública
+  </h1>
+  <div class="reveal" style="margin-top:clamp(12px,2vh,20px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(18px,2.8vw,30px);font-style:italic;color:var(--text-dim)">
+      Pipeline ETL + IA para a Câmara dos Deputados
+    </p>
+  </div>
+  <div class="reveal" style="margin-top:clamp(20px,3vh,32px);display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+    <span class="tag tag-accent">Sprint 1 — Extração</span>
+    <span class="tag tag-orange">Sprint 2 — Transformação</span>
+    <span class="tag tag-gold">Sprint 3 — IA</span>
+    <span class="tag tag-silver">Python &middot; PostgreSQL &middot; OpenAI</span>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 1 — ROADMAP DOS 3 SPRINTS                                   -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(74,158,255,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">PROJETO INTEGRADOR</p>
+  <h2 class="slide__heading reveal" style="font-size:clamp(32px,6vw,58px);font-style:italic;margin-bottom:clamp(4px,0.8vh,10px)">
+    3 Sprints, <span style="color:var(--accent)">1 Pipeline Completo</span>
+  </h2>
+
+  <div class="pipeline-vertical reveal">
+    <div class="pipeline-stage">
+      <div class="pipeline-connector">
+        <div class="pipeline-dot" style="border-color:var(--accent);background:var(--accent)"></div>
+        <div class="pipeline-line" style="background:linear-gradient(var(--accent),var(--orange))"></div>
+      </div>
+      <div class="pipeline-stage-content">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.1rem">
+          <span class="tag tag-accent">SPRINT 1</span>
+          <span class="session-title" style="color:var(--accent)">Extração</span>
+        </div>
+        <p class="session-desc">Cliente HTTP para a API da Câmara dos Deputados &mdash; retry exponencial, paginação automática, 5 endpoints. Dados salvos em JSON para reprocessamento.</p>
+      </div>
+    </div>
+    <div class="pipeline-stage">
+      <div class="pipeline-connector">
+        <div class="pipeline-dot" style="border-color:var(--orange);background:var(--orange)"></div>
+        <div class="pipeline-line" style="background:linear-gradient(var(--orange),var(--gold))"></div>
+      </div>
+      <div class="pipeline-stage-content">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.1rem">
+          <span class="tag tag-orange">SPRINT 2</span>
+          <span class="session-title" style="color:var(--orange)">Transformação &amp; Carga</span>
+        </div>
+        <p class="session-desc">Pandas para normalizar e limpar dados brutos. Modelo dimensional estrela no PostgreSQL via Supabase. Upsert idempotente — zero duplicatas.</p>
+      </div>
+    </div>
+    <div class="pipeline-stage">
+      <div class="pipeline-connector">
+        <div class="pipeline-dot" style="border-color:var(--gold);background:var(--gold)"></div>
+        <div class="pipeline-line" style="background:var(--gold);height:0"></div>
+      </div>
+      <div class="pipeline-stage-content">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.1rem">
+          <span class="tag tag-gold">SPRINT 3</span>
+          <span class="session-title" style="color:var(--gold)">Enriquecimento IA</span>
+        </div>
+        <p class="session-desc">Embeddings com pgvector, classificação temática e resumo executivo via GPT-4o-mini. Proposições parlamentares com contexto semântico.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:clamp(10px,1.5vh,18px)">
+    <div class="phase-flow">
+      <div class="phase-card" style="border-color:rgba(74,158,255,0.15)">
+        <div class="phase-num" style="color:var(--accent)">API</div>
+        <div class="phase-name">Dados Brutos</div>
+        <div class="phase-desc">dadosabertos.camara.leg.br</div>
+      </div>
+      <div class="phase-connector">&rarr;</div>
+      <div class="phase-card" style="border-color:rgba(239,144,0,0.15)">
+        <div class="phase-num" style="color:var(--orange)">ETL</div>
+        <div class="phase-name">Modelo Dimensional</div>
+        <div class="phase-desc">Estrela no PostgreSQL</div>
+      </div>
+      <div class="phase-connector">&rarr;</div>
+      <div class="phase-card" style="border-color:rgba(212,175,55,0.15);animation:pulse-gold 4s ease-in-out infinite">
+        <div class="phase-num" style="color:var(--gold)">IA</div>
+        <div class="phase-name">Dados Inteligentes</div>
+        <div class="phase-desc">GPT-4o-mini + pgvector</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.95rem,1.6vw,1.2rem);font-style:italic;color:var(--text-dim);line-height:1.5;flex:1">
+      Dados públicos da Câmara dos Deputados transformados em inteligência parlamentar &mdash; transparência como serviço.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">Dados Abertos</span>
+      <span class="tag tag-silver">100% Python</span>
+      <span class="tag tag-gold">IA Generativa</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 2 — DIVIDER SPRINT 1                                        -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(74,158,255,0.06) 0%,transparent 50%)">
+  <div class="slide__number" style="background:linear-gradient(135deg,var(--accent) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">01</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 1 &middot; EXTRAÇÃO</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    Conectando à <span style="color:var(--accent)">API da Câmara</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    Cliente HTTP com retry exponencial, paginação automática e persistência em JSON.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 3 — CAMARAAPICLLIENT                                        -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 20%,rgba(74,158,255,0.05) 0%,transparent 40%)">
+  <p class="slide__label reveal">SPRINT 1 &middot; EXTRACT</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    <span style="color:var(--accent)">CamaraAPIClient</span> — robusto por design
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(16px,2.5vw,32px);align-items:start;margin-top:clamp(12px,2vh,20px)">
+    <!-- LEFT: terminal com código -->
+    <div class="terminal">
+      <div class="terminal__bar">
+        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#febc2e"></span>
+        <span class="terminal__dot" style="background:#28c840"></span>
+        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">src/extract/camara_api.py</span>
+      </div>
+      <div class="terminal__body" style="font-size:clamp(0.72rem,1vw,0.85rem);line-height:1.6">
+        <p><span style="color:var(--purple)">class</span> <span style="color:var(--cyan)">CamaraAPIClient</span>:</p>
+        <p>&nbsp;&nbsp;<span style="color:var(--purple)">def</span> <span style="color:var(--accent)">__init__</span>(<span style="color:var(--text)">self</span>):</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text-dim)"># config via .env</span></p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;self.base_url = <span style="color:var(--green)">CAMARA_API_BASE_URL</span></p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;self.timeout = <span style="color:var(--gold)">30</span></p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;self.page_size = <span style="color:var(--gold)">100</span></p>
+        <p>&nbsp;</p>
+        <p>&nbsp;&nbsp;<span style="color:var(--purple)">def</span> <span style="color:var(--accent)">_get_paginated</span>(self, path, params):</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">for</span> attempt <span style="color:var(--purple)">in</span> <span style="color:var(--cyan)">range</span>(<span style="color:var(--gold)">3</span>):</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">try</span>:</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r = requests.get(url, timeout=self.timeout)</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r.raise_for_status()</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">return</span> r.json()[<span style="color:var(--green)">"dados"</span>]</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">except</span> HTTPError:</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time.sleep(<span style="color:var(--gold)">2</span> ** attempt) <span style="color:var(--text-dim)"># exponencial</span></p>
+      </div>
+    </div>
+
+    <!-- RIGHT: cards de features -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-glow 4s ease-in-out infinite">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">RETRY EXPONENCIAL</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">3 tentativas com backoff 1s → 2s → 4s. API pública com instabilidades ocasionais.</p>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(176,190,197,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--silver);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PAGINAÇÃO AUTOMÁTICA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">100 itens/página, itera automaticamente até última página &mdash; transparente para quem chama.</p>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PERSISTÊNCIA JSON</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Dados brutos em <span style="font-family:var(--font-mono);color:var(--text)">data/raw/</span> com <span style="font-family:var(--font-mono);color:var(--text)">ensure_ascii=False</span>. Acentos preservados.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);line-height:1.5;flex:1">
+      5 endpoints: <strong style="color:var(--text)">/deputados, /partidos, /proposicoes, /votacoes</strong> e despesas CEAP por deputado (arquivo separado, ~500 chamadas HTTP).
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">httpx / requests</span>
+      <span class="tag tag-silver">Configurável via .env</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 4 — ENDPOINTS DA API                                        -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 70% 20%,rgba(74,158,255,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">SPRINT 1 &middot; ENDPOINTS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    O que a <span style="color:var(--accent)">API oferece</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,1.2vw,14px);margin-top:clamp(14px,2.5vh,24px);align-items:start">
+    <div class="tier-card" style="border-color:rgba(74,158,255,0.2)">
+      <h4 style="color:var(--accent)">/deputados</h4>
+      <div class="tier-sub" style="color:var(--accent)">Dimensão</div>
+      <p>513 deputados federais em exercício. Nome, partido, UF, foto, contatos.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(176,190,197,0.2)">
+      <h4 style="color:var(--silver)">/partidos</h4>
+      <div class="tier-sub" style="color:var(--silver)">Dimensão</div>
+      <p>21 partidos com sigla, nome completo e membros do diretório.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(239,144,0,0.2)">
+      <h4 style="color:var(--orange)">/proposicoes</h4>
+      <div class="tier-sub" style="color:var(--orange)">Fato</div>
+      <p>PLs, PECs, MPVs. Ementa, autores, situação e data de apresentação.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(212,175,55,0.2)">
+      <h4 style="color:var(--gold)">/votacoes</h4>
+      <div class="tier-sub" style="color:var(--gold)">Fato</div>
+      <p>Votações nominais com resultado, data e proposição relacionada.</p>
+    </div>
+    <div class="tier-card" style="border-color:rgba(63,185,80,0.2)">
+      <h4 style="color:var(--green)">/despesas</h4>
+      <div class="tier-sub" style="color:var(--green)">Fato CEAP</div>
+      <p>~500 calls HTTP &mdash; uma por deputado. 187k registros de gastos parlamentares.</p>
+    </div>
+  </div>
+
+  <!-- SVG pipeline horizontal mostrando fluxo -->
+  <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
+    <svg viewBox="0 0 900 80" width="100%" height="80" style="overflow:visible">
+      <!-- API box -->
+      <rect x="10" y="20" width="140" height="40" rx="8" fill="rgba(74,158,255,0.06)" stroke="rgba(74,158,255,0.25)" stroke-width="1.5"/>
+      <text x="80" y="45" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#4a9eff">API Câmara</text>
+      <!-- Arrow -->
+      <line x1="152" y1="40" x2="205" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-blue)"/>
+      <!-- fetch_* box -->
+      <rect x="210" y="20" width="160" height="40" rx="8" fill="rgba(176,190,197,0.06)" stroke="rgba(176,190,197,0.2)" stroke-width="1.5"/>
+      <text x="290" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#b0bec5">fetch_deputados()</text>
+      <text x="290" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">+ paginação + retry</text>
+      <!-- Arrow -->
+      <line x1="372" y1="40" x2="425" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-silver)"/>
+      <!-- JSON box -->
+      <rect x="430" y="20" width="160" height="40" rx="8" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="1.5"/>
+      <text x="510" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">data/raw/*.json</text>
+      <text x="510" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">ensure_ascii=False</text>
+      <!-- Arrow -->
+      <line x1="592" y1="40" x2="645" y2="40" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-gold)"/>
+      <!-- Transform ready box -->
+      <rect x="650" y="20" width="240" height="40" rx="8" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.2)" stroke-width="1.5"/>
+      <text x="770" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#3fb950">pronto para Sprint 2</text>
+      <text x="770" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">idempotente — reexecutável</text>
+    </svg>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Cada <code style="font-family:var(--font-mono);color:var(--accent);background:var(--accent-dim);padding:2px 6px;border-radius:4px">fetch_*()</code> retorna lista de dicts prontos para o Pandas &mdash; sem transformação prévia.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">run_extraction.py</span>
+      <span class="tag tag-silver">~20min (com CEAP)</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 5 — DIVIDER SPRINT 2                                        -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(239,144,0,0.06) 0%,transparent 50%)">
+  <div class="slide__number" style="background:linear-gradient(135deg,var(--orange) 0%,var(--gold) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">02</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 2 &middot; TRANSFORMAÇÃO &amp; CARGA</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    Do JSON <span style="color:var(--orange)">ao Modelo Dimensional</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    Pandas transforma, SQLAlchemy carrega. Upsert idempotente &mdash; execute quantas vezes quiser.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 6 — PIPELINE E2E                                            -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px)">
+  <p class="slide__label reveal">SPRINT 2 &middot; PIPELINE E2E</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--orange)">run_pipeline.py</code> — três camadas
+  </h2>
+
+  <!-- Phase flow: Extract → Transform → Load -->
+  <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
+    <div class="phase-flow">
+      <div class="phase-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+        <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">📥</div>
+        <div class="phase-num" style="color:var(--accent)">Extract</div>
+        <div class="phase-name">CamaraAPIClient</div>
+        <div class="phase-desc" style="margin-top:8px;text-align:left">
+          &bull; Lê data/raw/*.json<br>
+          &bull; Valida arquivos presentes<br>
+          &bull; Fallback: re-extrai da API
+        </div>
+      </div>
+      <div class="phase-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <line x1="5" y1="20" x2="30" y2="20" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="5 3" class="flow-line"/>
+          <polygon points="28,15 38,20 28,25" fill="#b0bec5"/>
+        </svg>
+      </div>
+      <div class="phase-card" style="border-color:rgba(239,144,0,0.2);animation:pulse-orange 4s ease-in-out infinite 1s">
+        <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">⚙️</div>
+        <div class="phase-num" style="color:var(--orange)">Transform</div>
+        <div class="phase-name">Pandas + Limpeza</div>
+        <div class="phase-desc" style="margin-top:8px;text-align:left">
+          &bull; strip_accents() em chaves<br>
+          &bull; safe_str() para campos nulos<br>
+          &bull; Type casting &amp; normalização
+        </div>
+      </div>
+      <div class="phase-connector">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <line x1="5" y1="20" x2="30" y2="20" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="5 3" class="flow-line"/>
+          <polygon points="28,15 38,20 28,25" fill="#d4af37"/>
+        </svg>
+      </div>
+      <div class="phase-card" style="border-color:rgba(63,185,80,0.2);animation:pulse-green 4s ease-in-out infinite 2s">
+        <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">💾</div>
+        <div class="phase-num" style="color:var(--green)">Load</div>
+        <div class="phase-name">SQLAlchemy Upsert</div>
+        <div class="phase-desc" style="margin-top:8px;text-align:left">
+          &bull; ON CONFLICT DO UPDATE<br>
+          &bull; Chaves naturais como PK<br>
+          &bull; Idempotente por design
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal mostrando execução -->
+  <div class="reveal" style="margin-top:clamp(12px,2vh,20px)">
+    <div class="terminal">
+      <div class="terminal__bar">
+        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#febc2e"></span>
+        <span class="terminal__dot" style="background:#28c840"></span>
+        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">Terminal</span>
+      </div>
+      <div class="terminal__body" style="font-size:clamp(0.72rem,1vw,0.85rem);line-height:1.6">
+        <span class="terminal__prompt">$</span> python scripts/run_pipeline.py<br>
+        <span style="color:var(--accent)">[INFO]</span> Extraindo 21 partidos... <span style="color:var(--green)">✓ 21 carregados</span><br>
+        <span style="color:var(--accent)">[INFO]</span> Extraindo 513 deputados... <span style="color:var(--green)">✓ 513 carregados</span><br>
+        <span style="color:var(--accent)">[INFO]</span> Extraindo proposições... <span style="color:var(--green)">✓ 100 carregadas</span><br>
+        <span style="color:var(--accent)">[INFO]</span> Extraindo votações... <span style="color:var(--green)">✓ 100 carregadas</span><br>
+        <span style="color:var(--orange)">[INFO]</span> Pipeline concluído em 47s &mdash; 0 erros, 0 duplicatas
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Flag <code style="font-family:var(--font-mono);color:var(--accent);background:var(--accent-dim);padding:2px 6px;border-radius:4px">--incremental</code> atualiza apenas registros novos &mdash; uso diário sem re-processar todo o histórico.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-orange">pandas</span>
+      <span class="tag tag-green">SQLAlchemy</span>
+      <span class="tag tag-silver">psycopg2</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 7 — MODELO DIMENSIONAL (STAR SCHEMA)                        -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 30%,rgba(239,144,0,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">SPRINT 2 &middot; MODELO DE DADOS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Esquema <span style="color:var(--orange)">estrela</span> no PostgreSQL
+  </h2>
+
+  <div class="reveal" style="flex:1;margin-top:clamp(12px,2vh,20px)">
+    <svg viewBox="0 0 960 420" width="100%" style="max-height:60vh;overflow:visible">
+      <!-- Conexões das fatos com dim_deputados -->
+      <line x1="480" y1="210" x2="320" y2="130" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="480" y1="210" x2="480" y2="80" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="480" y1="210" x2="640" y2="130" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="480" y1="210" x2="200" y2="320" stroke="rgba(176,190,197,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="480" y1="210" x2="760" y2="320" stroke="rgba(176,190,197,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+      <!-- dim_deputados (centro) -->
+      <rect x="370" y="170" width="220" height="80" rx="12" fill="rgba(74,158,255,0.08)" stroke="rgba(74,158,255,0.4)" stroke-width="2"/>
+      <text x="480" y="202" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="18" font-style="italic" fill="#4a9eff">dim_deputados</text>
+      <text x="480" y="222" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">deputado_id · nome · partido</text>
+      <text x="480" y="237" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">uf · sexo · foto_url</text>
+
+      <!-- dim_partidos (top-left) -->
+      <rect x="200" y="60" width="200" height="70" rx="10" fill="rgba(176,190,197,0.06)" stroke="rgba(176,190,197,0.3)" stroke-width="1.5"/>
+      <text x="300" y="90" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#b0bec5">dim_partidos</text>
+      <text x="300" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">partido_id · sigla · nome</text>
+      <text x="300" y="122" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">21 registros</text>
+
+      <!-- dim_temas (top-center) -->
+      <rect x="380" y="10" width="200" height="70" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.3)" stroke-width="1.5"/>
+      <text x="480" y="40" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#d4af37">dim_temas</text>
+      <text x="480" y="58" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">tema_id · nome · descricao</text>
+      <text x="480" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">10 temas (Sprint 3)</text>
+
+      <!-- fato_proposicoes (top-right) -->
+      <rect x="560" y="60" width="220" height="70" rx="10" fill="rgba(239,144,0,0.06)" stroke="rgba(239,144,0,0.3)" stroke-width="1.5"/>
+      <text x="670" y="90" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#ef9000">fato_proposicoes</text>
+      <text x="670" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">id · tipo · ementa · tema_id</text>
+      <text x="670" y="122" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">embedding (pgvector)</text>
+
+      <!-- fato_despesas (bottom-left) -->
+      <rect x="60" y="290" width="240" height="80" rx="10" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.3)" stroke-width="1.5"/>
+      <text x="180" y="320" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#3fb950">fato_despesas</text>
+      <text x="180" y="338" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">cod_documento · valor · tipo</text>
+      <text x="180" y="353" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">~187k registros (CEAP)</text>
+
+      <!-- fato_votacoes (bottom-right) -->
+      <rect x="660" y="290" width="240" height="80" rx="10" fill="rgba(167,139,250,0.06)" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
+      <text x="780" y="320" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#a78bfa">fato_votacoes</text>
+      <text x="780" y="338" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">votacao_id · resultado · data</text>
+      <text x="780" y="353" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">100 votações carregadas</text>
+    </svg>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(10px,1.5vh,18px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      <strong style="color:var(--text)">dim_deputados</strong> é o hub do esquema — conecta partidos, gastos CEAP, proposições e votações.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-orange">Star Schema</span>
+      <span class="tag tag-gold">pgvector (Sprint 3)</span>
+      <span class="tag tag-silver">Supabase</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 8 — UPSERT IDEMPOTENTE                                      -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 70%,rgba(63,185,80,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">SPRINT 2 &middot; CARGA</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Upsert <span style="color:var(--green)">idempotente</span> — execute quantas vezes quiser
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(16px,2.5vw,32px);align-items:start;margin-top:clamp(12px,2vh,20px)">
+    <div class="terminal">
+      <div class="terminal__bar">
+        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#febc2e"></span>
+        <span class="terminal__dot" style="background:#28c840"></span>
+        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">src/load/upsert.py</span>
+      </div>
+      <div class="terminal__body" style="font-size:clamp(0.72rem,1vw,0.85rem);line-height:1.65">
+        <p><span style="color:var(--purple)">from</span> sqlalchemy.dialects.postgresql <span style="color:var(--purple)">import</span> insert</p>
+        <p>&nbsp;</p>
+        <p><span style="color:var(--purple)">def</span> <span style="color:var(--accent)">upsert_dataframe</span>(df, table, pk_cols, engine):</p>
+        <p>&nbsp;&nbsp;records = df.to_dict(<span style="color:var(--green)">"records"</span>)</p>
+        <p>&nbsp;&nbsp;stmt = insert(table).values(records)</p>
+        <p>&nbsp;&nbsp;stmt = stmt.on_conflict_do_update(</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;index_elements=pk_cols,</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;set_={</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c: stmt.excluded[c]</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">for</span> c <span style="color:var(--purple)">in</span> df.columns</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--purple)">if</span> c <span style="color:var(--purple)">not in</span> pk_cols</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;}</p>
+        <p>&nbsp;&nbsp;)</p>
+        <p>&nbsp;&nbsp;<span style="color:var(--purple)">with</span> engine.begin() <span style="color:var(--purple)">as</span> conn:</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;conn.execute(stmt)</p>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
+      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.25);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-green 4s ease-in-out infinite">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">CHAVES NATURAIS</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">fato_despesas: <code style="font-family:var(--font-mono);color:var(--text)">(cod_documento, parcela)</code> &mdash; PK natural da CEAP, nunca duplica.</p>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">ATUALIZAÇÃO SELETIVA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Apenas campos não-PK são atualizados. Permite reprocessamento sem perda de enriquecimento IA.</p>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">BATCH OTIMIZADO</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">DataFrame inteiro em uma transação. PostgreSQL processa em batch, não linha por linha.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      O pipeline pode ser executado diariamente &mdash; dados novos são inseridos, existentes atualizados, enriquecimento IA preservado.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-green">ON CONFLICT DO UPDATE</span>
+      <span class="tag tag-silver">PostgreSQL nativo</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 9 — DIVIDER SPRINT 3                                        -->
+<!-- ================================================================ -->
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(212,175,55,0.06) 0%,transparent 50%)">
+  <div class="slide__number" style="background:linear-gradient(135deg,var(--gold) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">03</div>
+  <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 3 &middot; ENRIQUECIMENTO IA</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
+    Dados <span style="color:var(--gold)">ganham inteligência</span>
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.92rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(8px,1.5vh,16px);position:relative;z-index:1">
+    Embeddings, classificação temática e resumo executivo com GPT-4o-mini.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 10 — EMBEDDINGS + PGVECTOR                                  -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 80% 20%,rgba(212,175,55,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal">SPRINT 3 &middot; EMBEDDINGS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Busca <span style="color:var(--gold)">semântica</span> em proposições
+  </h2>
+
+  <!-- SVG pipeline de embeddings -->
+  <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
+    <svg viewBox="0 0 960 160" width="100%" style="overflow:visible">
+      <!-- Proposição text box -->
+      <rect x="10" y="45" width="200" height="70" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.3)" stroke-width="1.5"/>
+      <text x="110" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">Ementa da</text>
+      <text x="110" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">Proposição</text>
+      <text x="110" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">texto livre</text>
+      <!-- Arrow -->
+      <line x1="212" y1="80" x2="272" y2="80" stroke="#d4af37" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-gold)"/>
+      <!-- OpenAI box -->
+      <rect x="276" y="45" width="200" height="70" rx="10" fill="rgba(74,158,255,0.06)" stroke="rgba(74,158,255,0.3)" stroke-width="1.5"/>
+      <text x="376" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#4a9eff">text-embedding-</text>
+      <text x="376" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#4a9eff">ada-002</text>
+      <text x="376" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">OpenAI API</text>
+      <!-- Arrow -->
+      <line x1="478" y1="80" x2="538" y2="80" stroke="#4a9eff" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-blue)"/>
+      <!-- Vector box -->
+      <rect x="542" y="30" width="200" height="100" rx="10" fill="rgba(167,139,250,0.06)" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
+      <text x="642" y="70" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#a78bfa">vector(1536)</text>
+      <text x="642" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">[0.021, -0.453,</text>
+      <text x="642" y="103" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">0.187, ..., 0.062]</text>
+      <text x="642" y="120" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">1.536 dimensões</text>
+      <!-- Arrow -->
+      <line x1="744" y1="80" x2="804" y2="80" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" class="flow-line"/>
+      <!-- pgvector box -->
+      <rect x="808" y="45" width="142" height="70" rx="10" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.3)" stroke-width="1.5"/>
+      <text x="879" y="72" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="16" font-style="italic" fill="#3fb950">pgvector</text>
+      <text x="879" y="90" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">PostgreSQL</text>
+      <text x="879" y="105" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">cosine similarity</text>
+    </svg>
+  </div>
+
+  <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
+    <div class="stats-row cols-3">
+      <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+        <div class="stat-val" style="color:var(--gold)">1.536</div>
+        <div class="stat-lbl">dimensões por vetor</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(74,158,255,0.2)">
+        <div class="stat-val" style="color:var(--accent)">100</div>
+        <div class="stat-lbl">proposições com embedding</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(63,185,80,0.2)">
+        <div class="stat-val" style="color:var(--green)">&lt;=&gt;</div>
+        <div class="stat-lbl">operador cosine (pgvector)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      "Quais proposições falam sobre educação básica?" &mdash; busca semântica encontra mesmo sem as palavras exatas.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-gold">text-embedding-ada-002</span>
+      <span class="tag tag-green">pgvector extension</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 11 — CLASSIFICAÇÃO TEMÁTICA + RESUMO IA                     -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(212,175,55,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">SPRINT 3 &middot; IA GENERATIVA</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    <span style="color:var(--gold)">GPT-4o-mini</span> classifica e resume
+  </h2>
+
+  <div class="reveal" style="flex:1;display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(16px,2.5vw,32px);margin-top:clamp(12px,2vh,20px);align-items:start">
+
+    <!-- LEFT: Classificação Temática -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
+      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:10px">CLASSIFICAÇÃO TEMÁTICA</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-bottom:12px">GPT-4o-mini escolhe 1 dos 10 temas pré-definidos para cada proposição:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span class="tag tag-accent">Educação</span>
+          <span class="tag tag-green">Saúde</span>
+          <span class="tag tag-red">Segurança Pública</span>
+          <span class="tag tag-orange">Economia</span>
+          <span class="tag tag-purple">Direitos Humanos</span>
+          <span class="tag tag-blue">Meio Ambiente</span>
+          <span class="tag tag-gold">Previdência</span>
+          <span class="tag tag-cyan">Tecnologia</span>
+          <span class="tag tag-silver">Infraestrutura</span>
+          <span class="tag tag-silver">Outros</span>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PROMPT ESTRUTURADO</p>
+        <div style="font-family:var(--font-mono);font-size:clamp(0.7rem,0.9vw,0.8rem);color:var(--code-text);line-height:1.6;background:var(--code-bg);border-radius:8px;padding:10px">
+          <span style="color:var(--text-dim)">"""</span><br>
+          Classifique a proposição abaixo<br>
+          em exatamente UM dos temas.<br>
+          Responda apenas com o nome do tema.<br><br>
+          Proposição: {ementa}<br>
+          Temas: {lista_temas}<br>
+          <span style="color:var(--text-dim)">"""</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Resumo Executivo -->
+    <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
+      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">RESUMO EXECUTIVO</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-bottom:10px">Prompt versionado em <code style="font-family:var(--font-mono);color:var(--text)">ai/prompts/resumo_executivo.md</code>. Saída estruturada em Markdown:</p>
+        <div style="font-family:var(--font-mono);font-size:clamp(0.68rem,0.88vw,0.78rem);color:var(--code-text);line-height:1.7;background:var(--code-bg);border-radius:8px;padding:10px">
+          <span style="color:var(--accent)">**Contexto:**</span> Propõe alteração na<br>
+          &nbsp;Lei de Diretrizes da Educação...<br><br>
+          <span style="color:var(--green)">**Posições:**</span><br>
+          &bull; Favorável: ampliar acesso<br>
+          &bull; Contrário: custo fiscal<br><br>
+          <span style="color:var(--gold)">**Impacto potencial:**</span> Afeta ~2M alunos<br>
+          &nbsp;da rede pública federal.
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(176,190,197,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+        <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--silver);font-weight:700;letter-spacing:0.1em;margin-bottom:6px">CUSTO CONTROLADO</p>
+        <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">GPT-4o-mini: ~$0.001/proposição. Hard cap configurado. Log de custos em <code style="font-family:var(--font-mono);color:var(--text)">docs/custo_ia.csv</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      <code style="font-family:var(--font-mono);color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px">run_ai_enrichment.py --limite 100</code> &mdash; incremental, seguro para reexecutar.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-gold">GPT-4o-mini</span>
+      <span class="tag tag-green">openai Python SDK</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 12 — STACK TECNOLÓGICO                                      -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 80%,rgba(74,158,255,0.04) 0%,transparent 50%)">
+  <p class="slide__label reveal">STACK &middot; TECNOLOGIAS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Cada ferramenta <span style="color:var(--accent)">no lugar certo</span>
+  </h2>
+
+  <div class="reveal" style="flex:1">
+    <div class="tier-row cols-4" style="margin-top:clamp(14px,2.5vh,24px)">
+      <div class="tier-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+        <h4 style="color:var(--accent)">Python 3.14</h4>
+        <div class="tier-sub" style="color:var(--accent)">Linguagem</div>
+        <p>Type hints obrigatórios, f-strings, dataclasses. Venv isolado. UTF-8 em todos os arquivos.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(176,190,197,0.2)">
+        <h4 style="color:var(--silver)">Pandas</h4>
+        <div class="tier-sub" style="color:var(--silver)">Transformação</div>
+        <p>Normalização de JSON aninhado, limpeza de strings, type casting. DataFrame → PostgreSQL.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(63,185,80,0.2)">
+        <h4 style="color:var(--green)">SQLAlchemy</h4>
+        <div class="tier-sub" style="color:var(--green)">ORM + Carga</div>
+        <p>Core (não ORM) para upsert via dialeto PostgreSQL. Transações atômicas batch.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(239,144,0,0.2)">
+        <h4 style="color:var(--orange)">Supabase</h4>
+        <div class="tier-sub" style="color:var(--orange)">PostgreSQL Cloud</div>
+        <p>Free tier para dev. pgvector extension habilitada. Connection string via DATABASE_URL.</p>
+      </div>
+    </div>
+    <div class="tier-row cols-4" style="margin-top:clamp(8px,1.5vh,14px)">
+      <div class="tier-card" style="border-color:rgba(212,175,55,0.2)">
+        <h4 style="color:var(--gold)">OpenAI SDK</h4>
+        <div class="tier-sub" style="color:var(--gold)">IA Generativa</div>
+        <p>GPT-4o-mini para classificação e resumo. Ada-002 para embeddings. Hard cap configurado.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(167,139,250,0.2)">
+        <h4 style="color:var(--purple)">pgvector</h4>
+        <div class="tier-sub" style="color:var(--purple)">Busca Semântica</div>
+        <p>Extension PostgreSQL. Vetores 1536-d. Operador &lt;=&gt; para similaridade cosseno.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(34,211,238,0.2)">
+        <h4 style="color:var(--cyan)">python-dotenv</h4>
+        <div class="tier-sub" style="color:var(--cyan)">Configuração</div>
+        <p>Todos os segredos via .env. DATABASE_URL, OPENAI_API_KEY, variáveis de configuração.</p>
+      </div>
+      <div class="tier-card" style="border-color:rgba(96,165,250,0.2)">
+        <h4 style="color:var(--blue)">logging</h4>
+        <div class="tier-sub" style="color:var(--blue)">Observabilidade</div>
+        <p>log.info/warning/error em todas as camadas. Zero print(). LOG_LEVEL configurável.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(10px,1.5vh,18px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim)">Dependências instaladas com <code style="font-family:var(--font-mono);color:var(--accent);background:var(--accent-dim);padding:2px 6px;border-radius:4px">--only-binary :all:</code> por compatibilidade com Python 3.14 no Windows.</p>
+    <span class="tag tag-silver">requirements.txt</span>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 13 — RESULTADOS TÉCNICOS                                    -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(74,158,255,0.06) 0%,transparent 50%)">
+  <p class="slide__label reveal">RESULTADOS &middot; NÚMEROS</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    O que foi <span style="color:var(--accent)">carregado</span>
+  </h2>
+
+  <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
+    <div class="stats-row cols-3">
+      <div class="stat-card" style="border-color:rgba(176,190,197,0.2)">
+        <div class="stat-val" style="color:var(--silver)">21</div>
+        <div class="stat-lbl">partidos políticos</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+        <div class="stat-val" style="color:var(--accent)">513</div>
+        <div class="stat-lbl">deputados federais</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(239,144,0,0.2)">
+        <div class="stat-val" style="color:var(--orange)">100</div>
+        <div class="stat-lbl">proposições carregadas</div>
+      </div>
+    </div>
+    <div class="stats-row cols-3" style="margin-top:clamp(8px,1.5vh,14px)">
+      <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+        <div class="stat-val" style="color:var(--gold)">100</div>
+        <div class="stat-lbl">votações carregadas</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(63,185,80,0.2)">
+        <div class="stat-val" style="color:var(--green)">187k</div>
+        <div class="stat-lbl">despesas CEAP</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(167,139,250,0.2)">
+        <div class="stat-val" style="color:var(--purple)">3</div>
+        <div class="stat-lbl">sprints entregues</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linha do tempo dos sprints -->
+  <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
+    <svg viewBox="0 0 900 80" width="100%" height="80">
+      <line x1="50" y1="40" x2="850" y2="40" stroke="rgba(120,160,220,0.15)" stroke-width="2"/>
+      <!-- Sprint 1 -->
+      <circle cx="200" cy="40" r="10" fill="var(--accent)" filter="url(#glow)"/>
+      <text x="200" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#4a9eff">Sprint 1</text>
+      <text x="200" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">API Client</text>
+      <!-- Sprint 2 -->
+      <circle cx="500" cy="40" r="10" fill="var(--orange)" filter="url(#glow)"/>
+      <text x="500" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#ef9000">Sprint 2</text>
+      <text x="500" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">ETL + Star Schema</text>
+      <!-- Sprint 3 -->
+      <circle cx="800" cy="40" r="10" fill="var(--gold)" filter="url(#glow)"/>
+      <text x="800" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#d4af37">Sprint 3</text>
+      <text x="800" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">IA Generativa</text>
+      <!-- Lines between -->
+      <line x1="210" y1="40" x2="488" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line"/>
+      <line x1="512" y1="40" x2="788" y2="40" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="6 4" class="flow-line"/>
+    </svg>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Pipeline em produção no Supabase (projeto <code style="font-family:var(--font-mono);color:var(--text)">yipwbjexekvrqgnpvjfn</code>). Dados ao vivo, disponíveis para consulta.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">Ao vivo no Supabase</span>
+      <span class="tag tag-green">0 erros de carga</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- SLIDE 14 — CLOSING QUOTE                                          -->
+<!-- ================================================================ -->
+<section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,0.06) 0%,transparent 60%)">
+  <div class="slide__quote-mark reveal">&ldquo;</div>
+  <blockquote class="reveal" style="color:var(--text)">
+    Transparência não é<br><span class="gradient-text">o fim &mdash; é o começo.</span>
+  </blockquote>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(16px,2vw,22px);font-style:italic;color:var(--text-dim);margin-top:clamp(16px,3vh,28px);max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6">
+    Dados públicos da Câmara dos Deputados estruturados, enriquecidos com IA e prontos para transformar como cidadãos entendem o Congresso.
+  </p>
+  <cite class="reveal">Pós-Tech Engenharia de Dados &middot; Xperiun &middot; Projeto Bússola Pública &middot; 2026</cite>
+  <div class="reveal" style="margin-top:clamp(20px,3vh,32px);display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap">
+    <span class="tag tag-accent">github.com/bussola-publica</span>
+    <span class="tag tag-silver">Supabase ao vivo</span>
+    <span class="tag tag-gold">Próxima: p2-resultados</span>
+  </div>
+</section>
+
+</div><!-- /deck -->
+
+<script>
+class SlideEngine {
+  constructor() {
+    this.deck = document.getElementById('deck');
+    this.slides = [...document.querySelectorAll('.slide')];
+    this.dots = document.getElementById('dots');
+    this.progress = document.getElementById('progress');
+    this.counter = document.getElementById('counter');
+    this.hints = document.getElementById('hints');
+    this.total = this.slides.length;
+    this.current = 0;
+
+    this.slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'deck-dot';
+      d.setAttribute('aria-label', 'Ir para slide ' + (i + 1));
+      d.addEventListener('click', () => this.goTo(i));
+      this.dots.appendChild(d);
+    });
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          this.current = this.slides.indexOf(e.target);
+          this.updateChrome();
+        }
+      });
+    }, { root: this.deck, threshold: 0.5 });
+
+    this.slides.forEach(s => obs.observe(s));
+
+    document.addEventListener('keydown', e => {
+      if (['ArrowDown','ArrowRight','Space','PageDown'].includes(e.code)) { e.preventDefault(); this.next(); }
+      if (['ArrowUp','ArrowLeft','PageUp'].includes(e.code)) { e.preventDefault(); this.prev(); }
+      if (e.code === 'Home') { e.preventDefault(); this.goTo(0); }
+      if (e.code === 'End') { e.preventDefault(); this.goTo(this.total - 1); }
+    });
+
+    let touchY = 0;
+    this.deck.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+    this.deck.addEventListener('touchend', e => {
+      const dy = touchY - e.changedTouches[0].clientY;
+      if (Math.abs(dy) > 50) dy > 0 ? this.next() : this.prev();
+    }, { passive: true });
+
+    setTimeout(() => this.hints.classList.add('faded'), 4000);
+    this.updateChrome();
+    if (this.slides[0]) this.slides[0].classList.add('visible');
+  }
+
+  goTo(i) { this.slides[i]?.scrollIntoView({ behavior: 'smooth' }); }
+  next() { this.goTo(Math.min(this.current + 1, this.total - 1)); }
+  prev() { this.goTo(Math.max(this.current - 1, 0)); }
+
+  updateChrome() {
+    const pct = ((this.current + 1) / this.total) * 100;
+    this.progress.style.width = pct + '%';
+    this.counter.textContent = (this.current + 1) + ' / ' + this.total;
+    [...this.dots.children].forEach((d, i) => d.classList.toggle('active', i === this.current));
+  }
+}
+new SlideEngine();
+</script>
+</body>
+</html>
