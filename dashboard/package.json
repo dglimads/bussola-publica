@@ -1,0 +1,30 @@
+{
+  "name": "bussola-legislativa-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard em tempo real da Bussola Publica - le o Supabase ao vivo via views agregadas.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "lucide-react": "^0.441.0",
+    "next": "^16.2.9",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.4",
+    "swr": "^2.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
+  }
+}
