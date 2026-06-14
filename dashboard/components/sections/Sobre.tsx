@@ -100,9 +100,9 @@ npm run build                      # gera a pasta out/`}</pre></div>
         <Panel>
           <div className="panel-head"><div><Eyebrow>Para rodar</Eyebrow><h3>O pipeline (Python)</h3></div></div>
           <div className="prompt"><pre>{`python scripts/explore_api.py            # valida a API
-python scripts/run_extraction.py         # extrai raw -> data/raw/
-python scripts/run_pipeline.py --apenas-carga
-python scripts/run_ai_enrichment.py --limite 100`}</pre></div>
+python scripts/1_run_extraction.py         # extrai raw -> data/raw/
+python scripts/2_run_pipeline.py --apenas-carga
+python scripts/3_run_ai_enrichment.py --limite 100`}</pre></div>
         </Panel>
       </div>
 

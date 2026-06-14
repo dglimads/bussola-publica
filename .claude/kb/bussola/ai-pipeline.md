@@ -17,7 +17,7 @@ Padroes e referencias para a camada de enriquecimento por IA (Sprint 3).
 ## Fluxo Completo
 
 ```python
-# scripts/run_ai_enrichment.py
+# scripts/3_run_ai_enrichment.py
 from src.ai.embedder import embed_pending
 from src.ai.classifier import classify_pending
 from src.ai.summarizer import summarize_pending

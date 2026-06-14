@@ -17,7 +17,9 @@ Uso granular (por entidade):
 """
 from __future__ import annotations
 
+import json
 import logging
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -278,20 +280,215 @@ def upsert_despesas(df: pd.DataFrame, engine: Engine) -> int:
 
 
 # =============================================================================
+# Autoria (ponte N:N) e votos nominais -- roadmap pos V1
+# =============================================================================
+
+def _dump_json(value: Any) -> str | None:
+    """Serializa dict/list para texto JSON (JSONB), preservando acentos."""
+    if value is None:
+        return None
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def upsert_ponte_autores(records: list[dict], engine: Engine) -> int:
+    """
+    Upsert idempotente em ponte_proposicao_autores.
+
+    Chave de conflito: indice unico de expressao
+        (proposicao_id, autor_tipo, nome_autor, COALESCE(uri_autor, '')).
+
+    Espera registros no formato de src.transform.autores.map_author.
+    Retorna o numero de linhas processadas.
+    """
+    if not records:
+        return 0
+    sql = text("""
+        INSERT INTO ponte_proposicao_autores
+            (proposicao_id, autor_id, autor_tipo, deputado_id, partido_id, nome_autor,
+             cod_tipo_autor, ordem_assinatura, proponente, uri_autor, raw_payload, atualizado_em)
+        VALUES
+            (:proposicao_id, :autor_id, :autor_tipo, :deputado_id, :partido_id, :nome_autor,
+             :cod_tipo_autor, :ordem_assinatura, :proponente, :uri_autor,
+             CAST(:raw_payload AS JSONB), NOW())
+        ON CONFLICT (proposicao_id, autor_tipo, nome_autor, COALESCE(uri_autor, '')) DO UPDATE SET
+            autor_id         = EXCLUDED.autor_id,
+            deputado_id      = EXCLUDED.deputado_id,
+            partido_id       = EXCLUDED.partido_id,
+            cod_tipo_autor   = EXCLUDED.cod_tipo_autor,
+            ordem_assinatura = EXCLUDED.ordem_assinatura,
+            proponente       = EXCLUDED.proponente,
+            raw_payload      = EXCLUDED.raw_payload,
+            atualizado_em    = NOW()
+    """)
+    params = [{**r, "raw_payload": _dump_json(r.get("raw_payload"))} for r in records]
+    with engine.begin() as conn:
+        conn.execute(sql, params)
+    return len(params)
+
+
+def update_proposicao_autoria_flags(
+    engine: Engine,
+    proposicao_id: int,
+    qtd_autores: int,
+    principal: dict | None,
+) -> None:
+    """
+    Marca a proposicao como processada e grava a desnormalizacao do autor principal.
+    `principal` e um registro da ponte (ou None se a proposicao nao tem autores).
+    """
+    sql = text("""
+        UPDATE fato_proposicoes SET
+            autores_carregados          = TRUE,
+            qtd_autores                 = :qtd_autores,
+            autor_principal_nome        = :nome,
+            autor_principal_tipo        = :tipo,
+            autor_principal_deputado_id = :deputado_id,
+            autor_principal_partido_id  = :partido_id
+        WHERE proposicao_id = :proposicao_id
+    """)
+    p = principal or {}
+    with engine.begin() as conn:
+        conn.execute(sql, {
+            "proposicao_id": proposicao_id,
+            "qtd_autores": qtd_autores,
+            "nome": p.get("nome_autor"),
+            "tipo": p.get("autor_tipo"),
+            "deputado_id": p.get("deputado_id"),
+            "partido_id": p.get("partido_id"),
+        })
+
+
+def upsert_votos(records: list[dict], engine: Engine) -> int:
+    """
+    Upsert idempotente em fato_votacao_votos.
+
+    Chave de conflito: (votacao_id, deputado_id).
+    Preserva sigla_partido_voto (partido no momento do voto).
+    Espera registros no formato de src.transform.votos.map_vote.
+    """
+    if not records:
+        return 0
+    sql = text("""
+        INSERT INTO fato_votacao_votos
+            (votacao_id, deputado_id, tipo_voto, sigla_partido_voto, sigla_uf_voto,
+             data_registro_voto, raw_payload, atualizado_em)
+        VALUES
+            (:votacao_id, :deputado_id, :tipo_voto, :sigla_partido_voto, :sigla_uf_voto,
+             CAST(:data_registro_voto AS TIMESTAMPTZ), CAST(:raw_payload AS JSONB), NOW())
+        ON CONFLICT (votacao_id, deputado_id) DO UPDATE SET
+            tipo_voto          = EXCLUDED.tipo_voto,
+            sigla_partido_voto = EXCLUDED.sigla_partido_voto,
+            sigla_uf_voto      = EXCLUDED.sigla_uf_voto,
+            data_registro_voto = EXCLUDED.data_registro_voto,
+            raw_payload        = EXCLUDED.raw_payload,
+            atualizado_em      = NOW()
+    """)
+    params = [{**r, "raw_payload": _dump_json(r.get("raw_payload"))} for r in records]
+    with engine.begin() as conn:
+        conn.execute(sql, params)
+    return len(params)
+
+
+def update_votacao_votos_flags(engine: Engine, votacao_id: str, qtd_votos: int) -> None:
+    """Marca a votacao como tendo votos nominais carregados."""
+    sql = text("""
+        UPDATE fato_votacoes
+        SET votos_carregados = TRUE, qtd_votos = :qtd_votos
+        WHERE votacao_id = :votacao_id
+    """)
+    with engine.begin() as conn:
+        conn.execute(sql, {"votacao_id": str(votacao_id), "qtd_votos": qtd_votos})
+
+
+def update_votacao_proposicao(
+    engine: Engine,
+    votacao_id: str,
+    proposicao_id: int | None,
+    uri_proposicao: str | None = None,
+    objeto_votacao: str | None = None,
+    cod_tipo_votacao: int | None = None,
+) -> None:
+    """
+    Vincula a votacao a uma proposicao (e metadados).
+
+    SEGURANCA DE FK: proposicao_id so e gravado se a proposicao existir em
+    fato_proposicoes (a votacao pode referenciar proposicao fora da base
+    carregada). uri/objeto sao gravados sempre, pois nao tem FK.
+    """
+    sql = text("""
+        UPDATE fato_votacoes SET
+            proposicao_id    = COALESCE(
+                (SELECT proposicao_id FROM fato_proposicoes WHERE proposicao_id = :proposicao_id),
+                proposicao_id),
+            uri_proposicao   = COALESCE(:uri_proposicao, uri_proposicao),
+            objeto_votacao   = COALESCE(:objeto_votacao, objeto_votacao),
+            cod_tipo_votacao = COALESCE(:cod_tipo_votacao, cod_tipo_votacao)
+        WHERE votacao_id = :votacao_id
+    """)
+    with engine.begin() as conn:
+        conn.execute(sql, {
+            "votacao_id": str(votacao_id),
+            "proposicao_id": proposicao_id,
+            "uri_proposicao": uri_proposicao,
+            "objeto_votacao": objeto_votacao,
+            "cod_tipo_votacao": cod_tipo_votacao,
+        })
+
+
+def log_pipeline_erro(
+    engine: Engine,
+    etapa: str,
+    *,
+    entidade_tipo: str | None = None,
+    entidade_id: str | None = None,
+    mensagem: str | None = None,
+    payload: Any = None,
+) -> None:
+    """
+    Registra uma divergencia nao bloqueante em pipeline_erros.
+
+    Falhas ao registrar o proprio erro sao engolidas (nunca derrubam o bridge).
+    """
+    sql = text("""
+        INSERT INTO pipeline_erros (etapa, entidade_tipo, entidade_id, mensagem, payload)
+        VALUES (:etapa, :entidade_tipo, :entidade_id, :mensagem, CAST(:payload AS JSONB))
+    """)
+    try:
+        with engine.begin() as conn:
+            conn.execute(sql, {
+                "etapa": etapa,
+                "entidade_tipo": entidade_tipo,
+                "entidade_id": str(entidade_id) if entidade_id is not None else None,
+                "mensagem": (mensagem or "")[:2000],
+                "payload": _dump_json(payload),
+            })
+    except Exception as exc:  # pragma: no cover - log de erro nunca deve quebrar o fluxo
+        log.debug("Falha ao registrar pipeline_erro (%s): %s", etapa, exc)
+
+
+# =============================================================================
 # Pipeline completo de carga
 # =============================================================================
 
-def upsert_all(engine: Engine | None = None) -> dict[str, int]:
+def upsert_all(
+    engine: Engine | None = None,
+    *,
+    incluir_despesas: bool = False,
+) -> dict[str, int]:
     """
-    Executa a carga completa na ordem correta de FK:
+    Executa a carga das entidades do nucleo do Radar Legislativo, na ordem de FK:
       1. dim_partidos
       2. dim_deputados    (FK -> partidos)
       3. fato_proposicoes (FK -> deputados)
       4. fato_votacoes    (FK -> proposicoes, nullable)
-      5. fato_despesas    (FK -> deputados)
 
     Cada etapa chama o modulo de transform correspondente,
     transforma os JSONs raw e faz upsert na tabela alvo.
+
+    DESPESAS CEAP (~145k linhas) NAO entram aqui por padrao: sao a etapa mais
+    lenta e nao fazem parte do escopo do Radar Legislativo. Rode-as isoladas via
+    scripts/6_run_despesas.py (que chama upsert_despesas direto). Para incluir na
+    carga mesmo assim, passe incluir_despesas=True.
 
     Returns:
         Dict com contagem de registros por tabela.
@@ -301,7 +498,6 @@ def upsert_all(engine: Engine | None = None) -> dict[str, int]:
     from src.transform.deputados   import transform_deputados
     from src.transform.proposicoes import transform_proposicoes
     from src.transform.votacoes    import transform_votacoes
-    from src.transform.despesas    import transform_despesas
 
     engine = engine or get_engine()
     counts: dict[str, int] = {}
@@ -312,7 +508,10 @@ def upsert_all(engine: Engine | None = None) -> dict[str, int]:
     counts["deputados"]   = upsert_deputados(transform_deputados(), engine)
     counts["proposicoes"] = upsert_proposicoes(transform_proposicoes(), engine)
     counts["votacoes"]    = upsert_votacoes(transform_votacoes(), engine)
-    counts["despesas"]    = upsert_despesas(transform_despesas(), engine)
+
+    if incluir_despesas:
+        from src.transform.despesas import transform_despesas
+        counts["despesas"] = upsert_despesas(transform_despesas(), engine)
 
     total = sum(counts.values())
     log.info("Carga concluida: %d registros no total | %s", total, counts)

@@ -12,5 +12,5 @@ export const PROJETO = {
   supabaseRest: "https://yipwbjexekvrqgnpvjfn.supabase.co",
   apiCamara: "https://dadosabertos.camara.leg.br/api/v2",
   apiCamaraDocs: "https://dadosabertos.camara.leg.br/swagger/api.html",
-  n8nWorkflow: "n8n/bussola_diario.json",
+  n8nWorkflow: "n8n/bussola_email_semanal.json",
 } as const;

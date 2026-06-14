@@ -3,7 +3,7 @@
 **Status:** active
 **Versao:** 1.0
 **Ultima atualizacao:** 2026-05-17
-**Implementacao:** `src/ai/`, `scripts/run_ai_enrichment.py`
+**Implementacao:** `src/ai/`, `scripts/3_run_ai_enrichment.py`
 **ADR completo:** `docs/decisoes_ia.md`
 
 ---

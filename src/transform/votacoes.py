@@ -43,7 +43,7 @@ def transform_votacoes(raw_dir: Path = DATA_RAW_DIR) -> pd.DataFrame:
     if not list_files:
         raise FileNotFoundError(
             f"Nenhum raw de votacoes em {vot_dir}. "
-            "Execute scripts/run_extraction.py primeiro."
+            "Execute scripts/1_run_extraction.py primeiro."
         )
 
     all_records: list[dict] = []

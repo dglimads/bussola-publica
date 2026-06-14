@@ -1,7 +1,7 @@
 "use client";
 import useSWR from "swr";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 import { Vote } from "lucide-react";
@@ -12,12 +12,18 @@ import { Note } from "@/components/ui/Note";
 import { ChartSkeleton, PanelError, Skeleton } from "@/components/ui/Skeleton";
 import { chartTooltip } from "@/components/ui/chartTheme";
 import { fmtInt, pct, fmtDataBR, fmtDataCurta } from "@/lib/format";
-import { getVotacoesResumo, getVotacoesPorOrgao, getVotacoesSerie } from "@/lib/queries";
+import {
+  getVotacoesResumo, getVotacoesPorOrgao, getVotacoesSerie, getVotosPorPartido,
+} from "@/lib/queries";
 
 export function Votacoes() {
   const { data: vot, error: errVot } = useSWR("votacoes_resumo", getVotacoesResumo);
   const { data: orgaos, error: errOrgao } = useSWR("votacoes_orgao", getVotacoesPorOrgao);
   const { data: serieRaw, error: errSerie } = useSWR("votacoes_serie", getVotacoesSerie);
+
+  const temVotos = (vot?.votos_nominais ?? 0) > 0;
+  // so busca votos por partido quando ja existe voto nominal carregado
+  const { data: votosPartido } = useSWR(temVotos ? "votos_partido" : null, getVotosPorPartido);
 
   const v = (node: React.ReactNode) => (vot ? node : <Skeleton w={60} h={22} />);
   const aprov = vot
@@ -34,7 +40,7 @@ export function Votacoes() {
       <div className="kpi-grid four">
         <KpiCard label="Votações" value={v(fmtInt(vot?.total ?? 0))} sub={vot ? `${fmtDataBR(vot.data_min)} – ${fmtDataBR(vot.data_max)}` : "—"} icon={Vote} />
         <KpiCard label="Aprovadas" value={v(fmtInt(vot?.aprovadas ?? 0))} sub={vot ? pct(vot.aprovadas, vot.total) : "—"} accent="#6FCF97" />
-        <KpiCard label="Reprovadas" value={v(fmtInt(vot?.reprovadas ?? 0))} sub={vot ? pct(vot.reprovadas, vot.total) : "—"} accent="#FF5C6C" />
+        <KpiCard label="Votos nominais" value={v(fmtInt(vot?.votos_nominais ?? 0))} sub={vot ? `${fmtInt(vot.com_votos)} votações com voto` : "—"} accent="#7CC4FF" />
         <KpiCard label="Órgãos" value={v(fmtInt(vot?.orgaos ?? 0))} sub="comissões + plenário" />
       </div>
 
@@ -74,6 +80,33 @@ export function Votacoes() {
         </Panel>
       </div>
 
+      {/* Votos nominais por partido -- so aparece quando ha voto carregado */}
+      {temVotos && (
+        <Panel>
+          <div className="panel-head">
+            <div><Eyebrow color="#7CC4FF">Voto nominal · por bancada</Eyebrow><h3>Como cada partido votou</h3></div>
+            <span className="muted-tag">Sim × Não no momento do voto</span>
+          </div>
+          {!votosPartido ? <ChartSkeleton height={300} /> : (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={votosPartido.slice(0, 14)} margin={{ top: 4, right: 8, left: -20, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,.08)" vertical={false} />
+                <XAxis dataKey="sigla" tick={{ fontSize: 9, fill: "#5C6E8C" }} angle={-45} textAnchor="end" height={40} tickLine={false} axisLine={false} interval={0} />
+                <YAxis tick={{ fontSize: 10, fill: "#5C6E8C" }} tickLine={false} axisLine={false} />
+                <Tooltip {...chartTooltip} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="sim" name="Sim" stackId="v" radius={[0, 0, 0, 0]} fill="#6FCF97" />
+                <Bar dataKey="nao" name="Não" stackId="v" radius={[3, 3, 0, 0]} fill="#FF5C6C" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+          <p className="caption">
+            Votos <code>Sim</code>/<code>Não</code> por sigla (campo <code>sigla_partido_voto</code> — partido no momento
+            do voto). Obstrução, abstenção e outros tipos ficam fora deste recorte.
+          </p>
+        </Panel>
+      )}
+
       <Panel>
         <div className="panel-head"><div><Eyebrow color="#7CC4FF">Cronologia</Eyebrow><h3>Votações por data</h3></div></div>
         {errSerie ? <PanelError message={errSerie.message} /> : !serieRaw ? <ChartSkeleton height={200} /> : (
@@ -95,10 +128,17 @@ export function Votacoes() {
         )}
       </Panel>
 
-      {vot && vot.com_proposicao === 0 ? (
+      {temVotos ? (
+        <Note tone="cyan" icon={Vote}>
+          <b>{fmtInt(vot!.votos_nominais)}</b> votos nominais carregados em <b>{fmtInt(vot!.com_votos)}</b> votações
+          (via <code>fato_votacao_votos</code>) — análises de voto por partido e por deputado habilitadas.
+          {vot!.com_proposicao > 0 && <> {fmtInt(vot!.com_proposicao)} votações já vinculadas a proposições.</>}
+        </Note>
+      ) : vot && vot.com_proposicao === 0 ? (
         <Note tone="slate" icon={Vote}>
-          Os eventos de votação ainda <b>não estão ligados às proposições</b> (<code>proposicao_id</code> nulo) nem há voto nominal por deputado —
-          por isso “votações por partido / distribuição de votos” fica <b>preparado para evolução</b>. Disponíveis hoje: órgão, data e aprovação.
+          Os eventos de votação ainda <b>não têm voto nominal por deputado</b> nem vínculo com proposição. A estrutura
+          já existe (<code>fato_votacao_votos</code>) — rode <code>python scripts/5_run_votes_bridge.py --only-missing</code>
+          {" "}e as análises de voto por partido/deputado aparecem aqui. Disponíveis hoje: órgão, data e aprovação.
         </Note>
       ) : vot ? (
         <Note tone="cyan" icon={Vote}>

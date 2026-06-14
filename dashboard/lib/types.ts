@@ -11,6 +11,8 @@ export type Kpis = {
   partidos: number;
   temas: number;
   votacoes: number;
+  votacoes_com_votos: number;
+  votos_nominais: number;
   despesas_docs: number;
   despesas_total: number;
   data_min: string | null;
@@ -30,6 +32,16 @@ export type PartidoAutor = { sigla: string | null; qtd: number };
 export type TopDeputadoAutoria = {
   deputado_id: number; nome: string; partido: string | null; uf: string; proposicoes: number;
 };
+export type ProposicaoPorDeputado = {
+  deputado_id: number; deputado: string; sigla_partido: string | null; uf: string;
+  qtd_proposicoes: number; qtd_temas: number; qtd_como_proponente: number;
+};
+
+// Heatmap tema x partido (autoria real via ponte_proposicao_autores)
+export type HeatmapCell = {
+  sigla_partido: string; tema: string; tema_id: number | null; critico: boolean;
+  qtd_proposicoes: number; qtd_deputados_autores: number;
+};
 
 export type DespesaPorPartido = { sigla: string | null; total: number; docs: number };
 export type DespesaPorCategoria = { categoria: string; total: number; docs: number };
@@ -43,10 +55,15 @@ export type TopFornecedor = {
 
 export type VotacoesResumo = {
   total: number; aprovadas: number; reprovadas: number; sem_resultado: number;
-  orgaos: number; com_proposicao: number; data_min: string | null; data_max: string | null;
+  orgaos: number; com_proposicao: number; com_votos: number; votos_nominais: number;
+  data_min: string | null; data_max: string | null;
 };
 export type VotacaoPorOrgao = { orgao: string; qtd: number; aprovadas: number };
 export type VotacaoSerie = { dia: string; qtd: number };
+// Votos nominais agregados por partido (no momento do voto)
+export type VotoPorPartido = {
+  sigla: string; qtd_votos: number; sim: number; nao: number; qtd_deputados: number;
+};
 
 export type CriticaRecente = {
   proposicao_id: number; tipo: string; data_apresentacao: string; tema: string; ementa: string;

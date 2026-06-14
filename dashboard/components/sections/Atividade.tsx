@@ -30,8 +30,11 @@ export function Atividade() {
     <div className="stack">
       {!temAutor && (
         <Note tone="amber">
-          A API não traz o autor diretamente em <code>/proposicoes</code> — por isso <b>“proposições por deputado/partido”</b> ainda não é mensurável
-          (<code>autor_id</code> nulo). Esta seção usa os sinais <b>reais já carregados</b>: composição das bancadas e <b>cota parlamentar (CEAP)</b>, que liga deputado → partido.
+          A API não traz o autor diretamente em <code>/proposicoes</code> — a autoria vem da ponte N:N{" "}
+          <code>ponte_proposicao_autores</code>, ainda não populada. Rode{" "}
+          <code>python scripts/4_run_authors_bridge.py --only-missing</code> e <b>“proposições por deputado/partido”</b>{" "}
+          aparece aqui. Por ora, esta seção usa os sinais <b>reais já carregados</b>: composição das bancadas e{" "}
+          <b>cota parlamentar (CEAP)</b>, que liga deputado → partido.
         </Note>
       )}
 

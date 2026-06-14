@@ -1,28 +1,27 @@
 """
-Etapa 1 de 3 do pipeline: extracao de dados da API da Camara.
+Etapa 1 do pipeline: extracao de dados da API da Camara.
 
 QUANDO RODAR:
-  Execute este script PRIMEIRO, antes de run_pipeline.py ou qualquer carga.
+  Execute este script PRIMEIRO, antes de 2_run_pipeline.py ou qualquer carga.
   Ele salva os dados brutos em data/raw/ que os demais scripts precisam.
 
 O QUE FAZ:
   - Extrai as 4 entidades principais: deputados, partidos, proposicoes, votacoes.
-  - Opcionalmente extrai as despesas CEAP de todos os deputados (~500 chamadas HTTP).
+
+  As despesas CEAP (lentas, fora do escopo do Radar Legislativo) NAO sao extraidas
+  aqui -- elas tem pipeline proprio: python scripts/6_run_despesas.py
 
 PROXIMOS PASSOS:
-  Apos rodar, execute: python scripts/run_pipeline.py --apenas-carga
-  Ou o pipeline completo: python scripts/run_pipeline.py
+  Apos rodar, execute: python scripts/2_run_pipeline.py --apenas-carga
+  Ou o pipeline completo: python scripts/2_run_pipeline.py
 
 ORDEM RECOMENDADA DE USO:
-  1. python scripts/run_extraction.py            # extrai base (rapido, ~2min)
-  2. python scripts/run_extraction.py --incluir-despesas  # adiciona CEAP (lento, ~10-20min)
-  3. python scripts/run_pipeline.py --apenas-carga        # carrega tudo no banco
+  1. python scripts/1_run_extraction.py              # extrai base (rapido, ~2min)
+  2. python scripts/2_run_pipeline.py --apenas-carga  # carrega no banco
+  3. python scripts/6_run_despesas.py                 # despesas, por ultimo (lento)
 
 Flags:
-  --dias N             Janela de dias para proposicoes e votacoes (default: 1 = ontem)
-  --incluir-despesas   Extrai despesas CEAP de todos os deputados
-  --ano-despesas N     Ano fiscal para despesas (default: ultimos 6 meses da API)
-  --mes-despesas N     Mes (1-12) para despesas
+  --dias N   Janela de dias para proposicoes e votacoes (default: 1 = ontem)
 """
 from __future__ import annotations
 
@@ -56,23 +55,6 @@ def main() -> int:
         default=1,
         help="Janela de dias para proposicoes e votacoes (default: 1 = ontem)",
     )
-    parser.add_argument(
-        "--incluir-despesas",
-        action="store_true",
-        help="Extrai despesas CEAP de todos os deputados (~500 chamadas, pode demorar)",
-    )
-    parser.add_argument(
-        "--ano-despesas",
-        type=int,
-        default=None,
-        help="Ano fiscal para despesas (default: ultimos 6 meses)",
-    )
-    parser.add_argument(
-        "--mes-despesas",
-        type=int,
-        default=None,
-        help="Mes (1-12) para despesas",
-    )
     args = parser.parse_args()
 
     data_fim = date.today().isoformat()
@@ -99,24 +81,9 @@ def main() -> int:
     log.info("[4/4] Extraindo votacoes (janela: %s a %s)...", data_inicio, data_fim)
     fetch_votacoes(client, data_inicio=data_inicio, data_fim=data_fim)
 
-    # -------------------------------------------------------------------------
-    # Despesas CEAP -- opcional (lento: ~1 chamada por deputado, ~500 total)
-    # Salva em data/raw/deputados_despesas/<timestamp>_<deputado_id>.json
-    # -------------------------------------------------------------------------
-    if args.incluir_despesas:
-        from src.extract.camara_api import fetch_all_deputados_despesas
-        log.info(
-            "Extraindo despesas CEAP | ano=%s mes=%s",
-            args.ano_despesas, args.mes_despesas,
-        )
-        fetch_all_deputados_despesas(
-            client,
-            ano=args.ano_despesas,
-            mes=args.mes_despesas,
-        )
-
     log.info("Extracao concluida. Proximos passos:")
-    log.info("  python scripts/run_pipeline.py --apenas-carga")
+    log.info("  python scripts/2_run_pipeline.py --apenas-carga")
+    log.info("  python scripts/6_run_despesas.py   (despesas CEAP, por ultimo)")
     return 0
 
 

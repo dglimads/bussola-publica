@@ -30,7 +30,7 @@ export function Alertas() {
             {kpis ? (
               <>
                 O enriquecimento cobre um lote inicial do acervo. Hoje <b>{fmtInt(semTema)}</b> proposições estão <b>sem tema</b> e <b>{fmtInt(semResumo)}</b> <b>sem resumo</b>
-                {" "}(a base vai até {fmtDataBR(kpis.data_max)}). Rodar <code>run_ai_enrichment.py</code> no backlog recente fecha a lacuna e ativa os alertas de tema crítico em tempo real.
+                {" "}(a base vai até {fmtDataBR(kpis.data_max)}). Rodar <code>3_run_ai_enrichment.py</code> no backlog recente fecha a lacuna e ativa os alertas de tema crítico em tempo real.
               </>
             ) : "Calculando pendências do enriquecimento…"}
           </p>
@@ -55,7 +55,7 @@ export function Alertas() {
             </div>
           )}
           <p className="caption">
-            Temas marcados <code>critico = true</code> em <code>dim_temas</code> alimentam o nó de alerta do n8n (e-mail/Telegram) a cada varredura.
+            Temas marcados <code>critico = true</code> em <code>dim_temas</code> priorizam as proposições no e-mail semanal da equipe (Top 5), enviado pelo n8n toda segunda 08h.
           </p>
         </Panel>
 

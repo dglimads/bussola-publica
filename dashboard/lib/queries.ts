@@ -4,9 +4,9 @@ import { supabase } from "./supabaseClient";
 import { num } from "./format";
 import type {
   Kpis, ProposicaoPorTipo, ProposicaoPorTema, SerieDia, SerieSemana, ProposicaoPorAno,
-  DeputadoPorPartido, DeputadoPorUf, PartidoAutor, TopDeputadoAutoria,
-  DespesaPorPartido, DespesaPorCategoria, TopDeputadoDespesa, DespesaSerieMensal, TopFornecedor,
-  VotacoesResumo, VotacaoPorOrgao, VotacaoSerie, CriticaRecente,
+  DeputadoPorPartido, DeputadoPorUf, PartidoAutor, TopDeputadoAutoria, ProposicaoPorDeputado,
+  HeatmapCell, DespesaPorPartido, DespesaPorCategoria, TopDeputadoDespesa, DespesaSerieMensal,
+  TopFornecedor, VotacoesResumo, VotacaoPorOrgao, VotacaoSerie, VotoPorPartido, CriticaRecente,
   DataQualityRow, DataQualityMap, ProposicaoEnriquecida, EnriquecidasFiltro,
 } from "./types";
 
@@ -45,6 +45,8 @@ export async function getKpis(): Promise<Kpis> {
     partidos: num(d.partidos as number),
     temas: num(d.temas as number),
     votacoes: num(d.votacoes as number),
+    votacoes_com_votos: num(d.votacoes_com_votos as number),
+    votos_nominais: num(d.votos_nominais as number),
     despesas_docs: num(d.despesas_docs as number),
     despesas_total: num(d.despesas_total as number),
     data_min: (d.data_min as string) ?? null,
@@ -82,6 +84,20 @@ export const getProposicoesPorPartidoAutor = async () =>
 export const getTopDeputadosAutoria = async () =>
   coerce<TopDeputadoAutoria>(await fetchRows("vw_top_deputados_autoria", { column: "proposicoes" }), ["deputado_id", "proposicoes"]);
 
+export const getProposicoesPorDeputado = async () =>
+  coerce<ProposicaoPorDeputado>(
+    await fetchRows("vw_proposicoes_por_deputado", { column: "qtd_proposicoes" }),
+    ["deputado_id", "qtd_proposicoes", "qtd_temas", "qtd_como_proponente"],
+  );
+
+// Heatmap tema x partido (autoria real via ponte). Ordena por volume; a matriz
+// e montada no componente a partir das celulas (sigla x tema).
+export const getHeatmapTemaPartido = async () =>
+  coerce<HeatmapCell>(
+    await fetchRows("vw_heatmap_tema_partido", { column: "qtd_proposicoes" }),
+    ["tema_id", "qtd_proposicoes", "qtd_deputados_autores"],
+  );
+
 /* ---------------- Despesas (CEAP) ---------------- */
 export const getDespesasPorPartido = async () =>
   coerce<DespesaPorPartido>(await fetchRows("vw_despesas_por_partido", { column: "total" }), ["total", "docs"]);
@@ -110,6 +126,8 @@ export async function getVotacoesResumo(): Promise<VotacoesResumo> {
     sem_resultado: num(d.sem_resultado as number),
     orgaos: num(d.orgaos as number),
     com_proposicao: num(d.com_proposicao as number),
+    com_votos: num(d.com_votos as number),
+    votos_nominais: num(d.votos_nominais as number),
     data_min: (d.data_min as string) ?? null,
     data_max: (d.data_max as string) ?? null,
   };
@@ -120,6 +138,12 @@ export const getVotacoesPorOrgao = async () =>
 
 export const getVotacoesSerie = async () =>
   coerce<VotacaoSerie>(await fetchRows("vw_votacoes_serie", { column: "dia", ascending: true }), ["qtd"]);
+
+export const getVotosPorPartido = async () =>
+  coerce<VotoPorPartido>(
+    await fetchRows("vw_votos_por_partido", { column: "qtd_votos" }),
+    ["qtd_votos", "sim", "nao", "qtd_deputados"],
+  );
 
 /* ---------------- Alertas ---------------- */
 export const getCriticasRecentes = async () =>

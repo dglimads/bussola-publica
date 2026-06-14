@@ -13,17 +13,19 @@ const PIPE: Stage[] = [
   { ico: Filter, titulo: "Transform", tech: "Pandas", desc: "Valida, tipifica, deduplica; inválidos → quarentena." },
   { ico: Database, titulo: "Load", tech: "SQLAlchemy · Postgres", desc: "Upsert idempotente (ON CONFLICT) no modelo estrela." },
   { ico: Sparkles, titulo: "Enrich (IA)", tech: "OpenAI · pgvector", desc: "Embedding + cosseno → tema; gpt-4o-mini → resumo." },
-  { ico: Workflow, titulo: "Orquestração", tech: "n8n", desc: "Cron 06h + alerta de tema crítico (e-mail/Telegram)." },
+  { ico: Workflow, titulo: "Orquestração", tech: "n8n", desc: "E-mail semanal (segunda 08h) com o Top 5 da semana para a equipe." },
   { ico: LayoutDashboard, titulo: "Dashboard", tech: "Next.js · Supabase", desc: "Este painel: leitura ao vivo via views agregadas." },
 ];
 
-type Tbl = { nome: string; kind: "dim" | "fato"; cols: { c: string; key?: "pk" | "fk" | "ia" }[] };
+type Tbl = { nome: string; kind: "dim" | "fato" | "ponte"; cols: { c: string; key?: "pk" | "fk" | "ia" }[] };
 const MODELO: Tbl[] = [
   { nome: "dim_partidos", kind: "dim", cols: [{ c: "partido_id", key: "pk" }, { c: "sigla" }, { c: "nome" }] },
   { nome: "dim_deputados", kind: "dim", cols: [{ c: "deputado_id", key: "pk" }, { c: "nome" }, { c: "partido_id", key: "fk" }, { c: "uf" }, { c: "email" }] },
   { nome: "dim_temas", kind: "dim", cols: [{ c: "tema_id", key: "pk" }, { c: "nome" }, { c: "critico" }] },
-  { nome: "fato_proposicoes", kind: "fato", cols: [{ c: "proposicao_id", key: "pk" }, { c: "tipo" }, { c: "ementa" }, { c: "autor_id", key: "fk" }, { c: "tema_id", key: "ia" }, { c: "embedding", key: "ia" }, { c: "resumo_executivo", key: "ia" }] },
-  { nome: "fato_votacoes", kind: "fato", cols: [{ c: "votacao_id", key: "pk" }, { c: "proposicao_id", key: "fk" }, { c: "orgao" }, { c: "aprovacao" }] },
+  { nome: "fato_proposicoes", kind: "fato", cols: [{ c: "proposicao_id", key: "pk" }, { c: "tipo" }, { c: "ementa" }, { c: "tema_id", key: "ia" }, { c: "embedding", key: "ia" }, { c: "resumo_executivo", key: "ia" }, { c: "autores_carregados" }] },
+  { nome: "ponte_proposicao_autores", kind: "ponte", cols: [{ c: "proposicao_id", key: "fk" }, { c: "deputado_id", key: "fk" }, { c: "partido_id", key: "fk" }, { c: "autor_tipo" }, { c: "proponente" }, { c: "ordem_assinatura" }] },
+  { nome: "fato_votacoes", kind: "fato", cols: [{ c: "votacao_id", key: "pk" }, { c: "proposicao_id", key: "fk" }, { c: "orgao" }, { c: "aprovacao" }, { c: "qtd_votos" }] },
+  { nome: "fato_votacao_votos", kind: "fato", cols: [{ c: "votacao_id", key: "fk" }, { c: "deputado_id", key: "fk" }, { c: "tipo_voto" }, { c: "sigla_partido_voto" }] },
   { nome: "fato_despesas", kind: "fato", cols: [{ c: "cod_documento+parcela", key: "pk" }, { c: "deputado_id", key: "fk" }, { c: "valor_liquido" }, { c: "fornecedor_cnpj" }] },
 ];
 
@@ -31,6 +33,7 @@ type Dec = { ico: LucideIcon; titulo: string; texto: string; why: string };
 const DECISOES: Dec[] = [
   { ico: Save, titulo: "JSON bruto antes do transform", texto: "A extração persiste o JSON cru em disco antes de qualquer transformação.", why: "Se o transform quebra, não chama a API de novo — extrai uma vez, transforma quantas quiser." },
   { ico: Database, titulo: "Modelo dimensional estrela", texto: "Dimensões (partidos, deputados, temas) + fatos (proposições, votações, despesas).", why: "Consultas analíticas simples e relacionamentos claros por FK." },
+  { ico: Network, titulo: "Autoria N:N via tabela ponte", texto: "O endpoint /proposicoes não traz o autor; ele vem de /proposicoes/{id}/autores. A relação é N:N → ponte_proposicao_autores.", why: "Uma proposição tem vários autores e um autor assina várias — uma coluna autor_id única falharia. A ponte destrava o heatmap tema × partido e o voto nominal por deputado." },
   { ico: Sparkles, titulo: "Classificação por embeddings", texto: "text-embedding-3-small + similaridade de cosseno contra 10 temas; threshold 0,30.", why: "~50x mais barato e mais rápido que LLM-as-judge; abaixo do threshold fica sem tema (não força)." },
   { ico: Bot, titulo: "Resumo com gpt-4o-mini (T=0.2)", texto: "Persona de analista de Relações Governamentais; máx. 3 linhas, 200 tokens.", why: "Qualidade equivalente ao gpt-4o por fração do custo; T baixa favorece factualidade." },
   { ico: RefreshCw, titulo: "Upsert idempotente", texto: "INSERT … ON CONFLICT DO UPDATE; COALESCE preserva campos de IA já gerados.", why: "Re-execução diária não duplica nem reprocessa o que já foi feito." },
@@ -70,7 +73,7 @@ export function Arquitetura() {
 
       <Panel>
         <div className="panel-head">
-          <div><Eyebrow color="#E5B567">Modelo de dados</Eyebrow><h3>Esquema estrela · 6 tabelas</h3></div>
+          <div><Eyebrow color="#E5B567">Modelo de dados</Eyebrow><h3>Esquema estrela · 8 tabelas</h3></div>
           <span className="muted-tag"><Network size={11} style={{ verticalAlign: "-1px", marginRight: 5 }} />dim → fato</span>
         </div>
         <div className="modelo-grid">
@@ -88,7 +91,7 @@ export function Arquitetura() {
         </div>
         <p className="caption">
           <b>PK</b> chave primária · <b>FK</b> chave estrangeira · <b>IA</b> campo preenchido pela camada de IA.
-          Relações: <code>deputados → partidos</code>; <code>proposições → temas/autor</code>; <code>votações/despesas → proposições/deputados</code>.
+          Relações: <code>deputados → partidos</code>; <code>proposições ⇄ autores</code> (ponte N:N); <code>votações → proposições</code>; <code>votos/despesas → deputados</code>.
         </p>
       </Panel>
 

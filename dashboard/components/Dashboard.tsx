@@ -96,7 +96,7 @@ function Shell() {
         </div>
         <div className="topbar-right">
           <span className="live"><i /> Última varredura {kpis ? fmtUltimaCarga(kpis.ultima_carga) : "carregando…"}</span>
-          <span className="src">Supabase · 6 tabelas · API Câmara dos Deputados · tempo real</span>
+          <span className="src">Supabase · 8 tabelas · API Câmara dos Deputados · tempo real</span>
         </div>
       </header>
 

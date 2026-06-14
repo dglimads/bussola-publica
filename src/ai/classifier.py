@@ -55,33 +55,36 @@ def _embed_temas(temas: list[tuple[int, str, str]], client: Any) -> dict[int, li
     return {temas[i][0]: item.embedding for i, item in enumerate(resp.data)}
 
 
-def classify_pending(engine: Engine, limite: int = 500) -> int:
+def classify_pending(engine: Engine, limite: int | None = None) -> int:
     """
     Classifica proposicoes com embedding mas sem tema_id.
 
     Args:
         engine: SQLAlchemy engine conectado ao PostgreSQL.
-        limite: Maximo de proposicoes a classificar nesta execucao.
+        limite: Maximo de proposicoes a classificar nesta execucao. None = sem limite.
 
     Returns:
         Numero de proposicoes classificadas.
     """
     client = _get_client()
 
+    sql_props = """
+        SELECT proposicao_id, embedding
+        FROM fato_proposicoes
+        WHERE embedding IS NOT NULL AND tema_id IS NULL
+        ORDER BY proposicao_id
+    """
+    params: dict = {}
+    if limite is not None:
+        sql_props += " LIMIT :limite"
+        params["limite"] = limite
+
     with engine.connect() as conn:
         temas_rows = conn.execute(text(
             "SELECT tema_id, nome, descricao FROM dim_temas ORDER BY tema_id"
         )).fetchall()
 
-        prop_rows = conn.execute(text(
-            """
-            SELECT proposicao_id, embedding
-            FROM fato_proposicoes
-            WHERE embedding IS NOT NULL AND tema_id IS NULL
-            ORDER BY proposicao_id
-            LIMIT :limite
-            """
-        ), {"limite": limite}).fetchall()
+        prop_rows = conn.execute(text(sql_props), params).fetchall()
 
     if not prop_rows:
         log.info("Nenhuma proposicao pendente de classificacao.")

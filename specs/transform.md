@@ -1,9 +1,9 @@
 # Spec: Transformacao e Carga — Bussola Publica
 
 **Status:** active
-**Versao:** 1.0
-**Ultima atualizacao:** 2026-05-17
-**Implementacao:** `src/transform/`, `src/load/upsert.py`, `scripts/run_pipeline.py`
+**Versao:** 1.2
+**Ultima atualizacao:** 2026-06-14
+**Implementacao:** `src/transform/`, `src/load/upsert.py`, `src/bridge/`, `scripts/2_run_pipeline.py`, `scripts/6_run_despesas.py`
 **Agent detalhado:** `docs/AGENT_TRANSFORM.md`
 
 ---
@@ -37,14 +37,24 @@ PostgreSQL (Supabase)
 ## Ordem Obrigatoria de Carga (FK)
 
 ```
+--- nucleo do Radar Legislativo (upsert_all, via 2_run_pipeline.py) ---
 1. dim_partidos
 2. dim_deputados      (FK: partido_id)
-3. fato_proposicoes   (FK: autor_id -> deputado_id)
+3. fato_proposicoes   (FK: autor_id -> deputado_id, legado)
 4. fato_votacoes      (FK: proposicao_id -> proposicao_id)
-5. fato_despesas      (FK: deputado_id)
+--- bridges (rodam por ultimo, sobre dados ja carregados) ---
+5. ponte_proposicao_autores   (via 4_run_authors_bridge.py)
+6. fato_votacao_votos         (via 5_run_votes_bridge.py)
+--- despesas (pipeline proprio, fora do escopo; via 6_run_despesas.py) ---
+7. fato_despesas      (FK: deputado_id)
 ```
 
-Nunca alterar esta ordem. Violacao de FK aborta a carga.
+Nunca alterar a ordem 1-4. Violacao de FK aborta a carga. Os bridges (5-6) sao
+idempotentes e processam apenas o que ainda nao foi carregado (`--only-missing`).
+`fato_despesas` (7) tambem so depende de `dim_deputados`, mas e carregada
+isoladamente pelo `6_run_despesas.py` por ser a etapa mais lenta (~145k linhas) e
+fora do escopo do Radar Legislativo -- `upsert_all` a pula por padrao
+(`incluir_despesas=False`).
 
 ---
 
@@ -85,7 +95,7 @@ Arquivo lido: arquivo mais recente em `data/raw/partidos/` sem underscore no nom
 | `dataApresentacao` | `data_apresentacao` | date | `pd.to_datetime(..., errors="coerce").dt.date` |
 | `siglaTipo` | `tipo` | str | `safe_str()` |
 | `ementa` | `ementa` | str | `clean_text(safe_str())` — preservar acentos |
-| *(nulo)* | `autor_id` | None | Roadmap: resolucao via `/proposicoes/{id}/autores` |
+| *(nulo)* | `autor_id` | None | LEGADO — autoria real e N:N (bridge -> ponte) |
 | *(nulo)* | `tema_id` | None | Preenchido pelo Sprint 3 IA |
 
 Agrega TODOS os arquivos em `data/raw/proposicoes/`.
@@ -99,7 +109,7 @@ Agrega TODOS os arquivos em `data/raw/proposicoes/`.
 | `siglaOrgao` | `orgao` | str/None | `safe_str()` |
 | `descricao` | `descricao` | str/None | `clean_text(safe_str())` |
 | `aprovacao` | `aprovacao` | bool/None | mapa `{1: True, 0: False, None: None}` |
-| *(nulo)* | `proposicao_id` | None | Roadmap: fuzzy match de texto livre |
+| *(nulo)* | `proposicao_id` | None | Resolvido pelo bridge de votos via `/votacoes/{id}` |
 
 Agrega TODOS os arquivos em `data/raw/votacoes/`.
 
@@ -125,6 +135,40 @@ Agrega TODOS os arquivos em `data/raw/deputados_despesas/`.
 `deputado_id` extraido via regex de `_meta.endpoint`:
 `/deputados/220714/despesas` → `220714`
 
+### ponte_proposicao_autores (bridge de autoria)
+
+Mapeamento puro em `src/transform/autores.py` (`map_author`); orquestracao em
+`src/bridge/autores.py`. Le `/proposicoes/{id}/autores`.
+
+| Campo API | Campo schema | Transformacao |
+|-----------|-------------|---------------|
+| `uri` | `autor_id` | id numerico do fim da uri (se terminar em numero) |
+| `tipo` | `autor_tipo` | `safe_str()` — preservado ("Deputado", "Partido", ...) |
+| *(derivado)* | `deputado_id` | `autor_id` quando tipo=Deputado |
+| *(derivado)* | `partido_id` | `autor_id` quando tipo=Partido |
+| `nome` | `nome_autor` | `clean_text(safe_str())` (fallback "(sem nome)") |
+| `codTipo` | `cod_tipo_autor` | int |
+| `ordemAssinatura` | `ordem_assinatura` | int |
+| `proponente` | `proponente` | `normalize_bool` (1/0 → bool) |
+
+Autor principal: `proponente=true` > menor `ordem_assinatura` > primeiro item.
+Desnormaliza para `fato_proposicoes.autor_principal_*` + `autores_carregados`/`qtd_autores`.
+
+### fato_votacao_votos (bridge de votos)
+
+Mapeamento puro em `src/transform/votos.py` (`map_vote`); orquestracao em
+`src/bridge/votos.py`. Le `/votacoes/{id}/votos`.
+
+| Campo API | Campo schema | Transformacao |
+|-----------|-------------|---------------|
+| `deputado_.id` | `deputado_id` | int (a API usa `deputado_` com underscore) |
+| `tipoVoto` | `tipo_voto` | `clean_text(safe_str())` |
+| `deputado_.siglaPartido` | `sigla_partido_voto` | `safe_str()` — partido NO MOMENTO do voto |
+| `deputado_.siglaUf` | `sigla_uf_voto` | `safe_str()` |
+| `dataRegistroVoto` | `data_registro_voto` | string ISO → CAST timestamptz no load |
+
+Votos sem `deputado_id` sao descartados (logados). Lista vazia = votacao simbolica (normal).
+
 ---
 
 ## Estrategia de Upsert
@@ -136,6 +180,8 @@ Agrega TODOS os arquivos em `data/raw/deputados_despesas/`.
 | `fato_proposicoes` | `proposicao_id` | `data_apresentacao, tipo, ementa, ingested_at` | `tema_id`, `embedding`, `resumo_executivo` |
 | `fato_votacoes` | `votacao_id` | `data, orgao, descricao, aprovacao, ingested_at` | `proposicao_id` (se ja resolvido) |
 | `fato_despesas` | `(cod_documento, parcela)` | `valor_documento, valor_liquido, valor_glosa, tipo_despesa, ingested_at` | `fornecedor_nome, fornecedor_cnpj` |
+| `ponte_proposicao_autores` | `(proposicao_id, autor_tipo, nome_autor, COALESCE(uri_autor,''))` | `autor_id, deputado_id, partido_id, proponente, raw_payload` | — |
+| `fato_votacao_votos` | `(votacao_id, deputado_id)` | `tipo_voto, sigla_partido_voto, sigla_uf_voto, data_registro_voto, raw_payload` | — |
 
 ---
 
@@ -190,10 +236,12 @@ Agrega TODOS os arquivos em `data/raw/deputados_despesas/`.
 - [ ] Loga contagem: `log.info("X entidade: %d registros", len(df))`
 - [ ] Upsert usa ON CONFLICT DO UPDATE
 - [ ] Campos IA usam COALESCE
-- [ ] Testado com `run_pipeline.py --apenas-carga` sem erros
+- [ ] Testado com `2_run_pipeline.py --apenas-carga` sem erros
 
 ---
 
 ## Changelog
 
+- 1.2 (2026-06-14): Despesas CEAP desacopladas -> upsert_all pula fato_despesas por padrao (incluir_despesas=False); carga de despesas movida para pipeline proprio scripts/6_run_despesas.py
+- 1.1 (2026-06-14): Regras de mapeamento de autoria (ponte N:N) e votos nominais; bridges em src/bridge/; upsert da ponte e de fato_votacao_votos
 - 1.0 (2026-05-17): Versao inicial — distillada de AGENT_TRANSFORM.md e Sprint 2 concluido

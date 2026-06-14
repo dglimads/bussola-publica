@@ -6,9 +6,16 @@ Guia de contexto para o Claude Code e para qualquer desenvolvedor que entrar no 
 
 ## 1. O que e este projeto
 
-Pipeline ETL + IA que extrai dados diarios da API da Camara dos Deputados, transforma, persiste em PostgreSQL (Supabase) e enriquece com IA generativa.
+Pipeline ETL + IA que extrai dados da API da Camara dos Deputados, transforma com
+Pandas, persiste em PostgreSQL (Supabase) e enriquece com IA generativa. Os dados
+sao expostos num **dashboard Next.js ao vivo** (Bussola Legislativa) e um workflow
+**n8n** envia um **e-mail semanal** com o Top 5 proposicoes da semana para a equipe.
 
-**Entregavel:** Projeto integrador da Pos-Tech Engenharia de Dados Xperiun
+**Stack:** Python 3.14 (pandas, SQLAlchemy, OpenAI SDK) · PostgreSQL + pgvector
+(Supabase) · Next.js 16 + Recharts + SWR (dashboard) · n8n (orquestracao).
+
+**Entregavel:** Projeto integrador da Pos-Tech Engenharia de Dados Xperiun —
+Data Challenge: Radar Legislativo
 **Prazo:** 13/Mai/2026 → 15/Jun/2026
 
 ---
@@ -19,10 +26,28 @@ Pipeline ETL + IA que extrai dados diarios da API da Camara dos Deputados, trans
 |--------|--------|--------|
 | Sprint 1 | Exploracao da API, cliente HTTP com retry/paginacao | Concluido |
 | Sprint 2 | Transformacao (Pandas), carga (SQLAlchemy/PostgreSQL), despesas CEAP | Concluido |
-| Sprint 3 | IA: embeddings, classificacao tematica, resumo executivo (OpenAI) | Implementado |
+| Sprint 3 | IA: embeddings, classificacao tematica, resumo executivo (OpenAI) | Concluido |
+| Pos V1 | Autoria N:N (ponte) + votos nominais + heatmap tema x partido | Concluido (migration aplicada, bridges rodando) |
+| Entrega | Dashboard Next.js ao vivo + workflow n8n de e-mail semanal | Concluido |
 
 **Banco ao vivo (Supabase):** projeto `yipwbjexekvrqgnpvjfn`
-**Dados carregados:** 21 partidos, 513 deputados, 100 proposicoes, 100 votacoes, ~187k despesas CEAP
+
+**Dados carregados (estado atual):**
+
+| Entidade | Volume | Observacao |
+|----------|--------|------------|
+| `dim_partidos` | 21 | |
+| `dim_deputados` | 523 | |
+| `dim_temas` | 10 | seeds |
+| `fato_proposicoes` | 1.550 | 1.550 com embedding/resumo, 1.467 com tema |
+| `fato_votacoes` | 100 | 100 com votos processados |
+| `fato_votacao_votos` | 480 | votos nominais (votacoes simbolicas retornam 0) |
+| `ponte_proposicao_autores` | 519 | autoria de 500 proposicoes (rodar o bridge mais vezes para cobrir as 1.550) |
+| `fato_despesas` | ~145,5k | CEAP 2025 (pipeline isolado) |
+
+**Frente em andamento:** o bridge de autoria processa 500 proposicoes por execucao
+(`--limit` default). Repetir `python scripts/4_run_authors_bridge.py --only-missing`
+ate `alvos: 0` para cobrir as 1.550.
 
 ---
 
@@ -69,35 +94,42 @@ copy .env.example .env
    ```
 5. Execute o schema: cole o conteudo de `sql/schema.sql` no SQL Editor
 6. Execute as seeds: cole o conteudo de `sql/seeds_temas.sql`
+7. Execute a migration de autoria/votos: cole o conteudo de
+   `sql/migration_autoria_votos.sql` — cria a ponte N:N, `fato_votacao_votos`,
+   `pipeline_erros`, colunas auxiliares e as views agregadas. E idempotente e
+   necessaria para os bridges (scripts 4 e 5) e para o dashboard.
 
 ---
 
 ## 5. Ordem de execucao
 
-Execute nesta ordem para uma carga completa do zero:
+Os scripts sao numerados na ordem de execucao para nao se perder:
 
 ```
-1. python scripts/explore_api.py                    # Sprint 1: valida conectividade
-2. python scripts/run_extraction.py                 # Sprint 2: extrai raw data
-3. python scripts/run_pipeline.py --apenas-carga    # Sprint 2: transforma + carrega
-4. python scripts/run_ai_enrichment.py --limite 100 # Sprint 3: enriquecimento IA
+   python scripts/explore_api.py                      # Sprint 1: valida conectividade (utilitario)
+1. python scripts/1_run_extraction.py                 # Sprint 2: extrai raw data
+2. python scripts/2_run_pipeline.py --apenas-carga    # Sprint 2: transforma + carrega
+3. python scripts/3_run_ai_enrichment.py --limite 100 # Sprint 3: enriquecimento IA
+4. python scripts/4_run_authors_bridge.py --only-missing  # pos V1: ponte proposicao<->autor
+5. python scripts/5_run_votes_bridge.py --only-missing    # pos V1: votos nominais
+6. python scripts/6_run_despesas.py --ano 2025            # despesas CEAP (lento, por ultimo)
 ```
 
-Ou pipeline completo (extrai + transforma + carrega):
+Ou pipeline completo (extrai + transforma + carrega + autoria + votos):
 ```
-python scripts/run_pipeline.py
+python scripts/2_run_pipeline.py --with-authors --with-votes
 ```
 
-Com despesas CEAP (lento, ~500 chamadas HTTP, ~20min):
+Despesas CEAP (lento, ~500 chamadas HTTP + ~145k linhas, ~20min): pipeline
+proprio, fora do escopo do Radar Legislativo. Rode por ULTIMO, sem travar os demais:
 ```
-python scripts/run_extraction.py --incluir-despesas --ano-despesas 2025
-python scripts/run_pipeline.py --apenas-carga
+python scripts/6_run_despesas.py --ano 2025
 ```
 
 Uso incremental diario:
 ```
-python scripts/run_pipeline.py --incremental
-python scripts/run_ai_enrichment.py --limite 50
+python scripts/2_run_pipeline.py --incremental --with-authors --with-votes
+python scripts/3_run_ai_enrichment.py --limite 50
 ```
 
 ---
@@ -119,7 +151,7 @@ bussola-publica/
 │   ├── extract.md               <- regras de extracao da API
 │   ├── transform.md             <- regras de transformacao e carga
 │   ├── ai-enrichment.md         <- pipeline IA: embedding, classificacao, resumo
-│   └── orchestration.md         <- workflow n8n: cron, alertas
+│   └── orchestration.md         <- workflow n8n: e-mail semanal (Top 5)
 │
 ├── data/
 │   ├── raw/                     <- JSONs brutos da API (git-ignored)
@@ -140,9 +172,14 @@ bussola-publica/
 │   │   ├── deputados.py         <- raw → dim_deputados
 │   │   ├── proposicoes.py       <- raw → fato_proposicoes
 │   │   ├── votacoes.py          <- raw → fato_votacoes
-│   │   └── despesas.py          <- raw deputados_despesas/ → fato_despesas
+│   │   ├── despesas.py          <- raw deputados_despesas/ → fato_despesas
+│   │   ├── autores.py           <- payload autores → registros da ponte (mapeamento puro)
+│   │   └── votos.py             <- payload votos → registros de voto (mapeamento puro)
 │   ├── load/
-│   │   └── upsert.py            <- upsert idempotente via SQLAlchemy
+│   │   └── upsert.py            <- upsert idempotente via SQLAlchemy (inclui ponte/votos/flags)
+│   ├── bridge/                  <- orquestracao dos bridges (pos V1)
+│   │   ├── autores.py           <- run_authors_bridge: fetch+transform+upsert da ponte N:N
+│   │   └── votos.py             <- run_votes_bridge: vinculo votacao->proposicao + votos nominais
 │   ├── utils/
 │   │   └── text.py              <- limpeza de strings, strip_accents, safe_str
 │   └── ai/
@@ -152,20 +189,31 @@ bussola-publica/
 │       └── prompts/
 │           └── resumo_executivo.md  <- prompt versionado para gpt-4o-mini
 │
-├── scripts/
-│   ├── explore_api.py           <- SPRINT 1: exploracao interativa da API
-│   ├── run_extraction.py        <- SPRINT 2: apenas extracao (raw → data/raw/)
-│   ├── run_pipeline.py          <- SPRINT 2+3: pipeline completo E2E
-│   └── run_ai_enrichment.py     <- SPRINT 3: apenas enriquecimento IA
+├── scripts/                     <- numerados na ordem de execucao
+│   ├── explore_api.py           <- SPRINT 1: exploracao interativa da API (utilitario)
+│   ├── 1_run_extraction.py      <- SPRINT 2: apenas extracao (raw → data/raw/)
+│   ├── 2_run_pipeline.py        <- SPRINT 2+3: pipeline completo E2E (+ --with-authors/--with-votes)
+│   ├── 3_run_ai_enrichment.py   <- SPRINT 3: apenas enriquecimento IA
+│   ├── 4_run_authors_bridge.py  <- POS V1: popula ponte_proposicao_autores
+│   ├── 5_run_votes_bridge.py    <- POS V1: popula fato_votacao_votos + vinculo votacao->proposicao
+│   ├── 6_run_despesas.py        <- DESPESAS: pipeline isolado de CEAP (extrai+carrega, rodar por ultimo)
+│   └── trigger_server.py        <- servidor HTTP para acionar via n8n (utilitario)
 │
 ├── sql/
-│   ├── schema.sql               <- DDL do modelo dimensional (rodar 1x no Supabase)
-│   └── seeds_temas.sql          <- 10 temas iniciais de dim_temas
+│   ├── schema.sql                  <- DDL do modelo dimensional (rodar 1x no Supabase)
+│   ├── migration_autoria_votos.sql <- POS V1: ponte N:N, votos nominais, views agregadas
+│   └── seeds_temas.sql             <- 10 temas iniciais de dim_temas
 │
 ├── notebooks/
 │   └── 01_exploracao_api.ipynb  <- exploracao interativa do Sprint 1
 │
-├── n8n/                         <- workflows n8n (exportar do n8n Cloud)
+├── dashboard/                   <- painel Next.js 16 (Bussola Legislativa, le o Supabase ao vivo)
+│   ├── app/                     <- App Router + globals.css (tema/cores-raiz)
+│   ├── components/sections/     <- Visao Geral, Radar Tematico, Atividade, Votacoes, ...
+│   └── lib/                     <- queries.ts (views), types.ts, equipe.ts, projeto.ts
+├── presentation/                <- apresentacoes HTML (p1-arquitetura, p2-resultados)
+├── n8n/
+│   └── bussola_email_semanal.json  <- workflow: e-mail semanal Top 5 para a equipe
 ├── docs/
 │   ├── PRD.md                   <- requisitos do produto (escopo de negocio)
 │   ├── AGENT_INGESTOR.md        <- system prompt detalhado para copiloto Extract
@@ -195,19 +243,22 @@ bussola-publica/
 
 ## 8. Modelo de dados
 
-Esquema estrela no PostgreSQL:
+Esquema estrela no PostgreSQL (8 tabelas):
 
 ```
 dim_partidos ──┐
-               ├──> dim_deputados ──┐
-dim_temas ─────┤                   ├──> fato_proposicoes
-               │                   ├──> fato_despesas (CEAP)
-               └───────────────────┴──> fato_votacoes
+               ├──> dim_deputados ──┬──> fato_despesas (CEAP)
+dim_temas ─────┤                   ├──> fato_votacao_votos ──┐
+               │                   │                         │
+               ├──> fato_proposicoes ──> ponte_proposicao_autores (N:N)
+               └──> fato_votacoes  <───────────────────────────┘
 ```
 
 - `fato_despesas`: PK = `(cod_documento, parcela)` — chave natural da CEAP
-- `fato_votacoes`: PK = `votacao_id` — cabecalho de votacao (votos individuais = Sprint 3)
-- `fato_proposicoes`: `tema_id` e `embedding` preenchidos pelo Sprint 3
+- `fato_votacoes`: PK = `votacao_id` — cabecalho de votacao; `proposicao_id`/`qtd_votos` preenchidos pelo bridge de votos
+- `fato_votacao_votos`: voto nominal por deputado — chave `(votacao_id, deputado_id)`, alimentada por `/votacoes/{id}/votos`
+- `ponte_proposicao_autores`: relacao N:N proposicao<->autor (roadmap pos V1); a coluna legada `fato_proposicoes.autor_id` NAO e mais a base analitica
+- `fato_proposicoes`: `tema_id`/`embedding`/`resumo_executivo` preenchidos pela IA; `autores_carregados`/`qtd_autores`/`autor_principal_*` pelo bridge de autoria
 
 ---
 
@@ -270,7 +321,7 @@ Este projeto usa **Spec-Driven Development** para desenvolvimento assistido por 
 | `specs/extract.md` | Extracao da API da Camara |
 | `specs/transform.md` | Transformacao Pandas + carga PostgreSQL |
 | `specs/ai-enrichment.md` | Pipeline IA: embedding, classificacao, resumo |
-| `specs/orchestration.md` | Workflow n8n: cron, alertas |
+| `specs/orchestration.md` | Workflow n8n: e-mail semanal (Top 5 da semana) |
 
 ### Como pedir ao Claude com SDD
 
@@ -294,7 +345,7 @@ Este projeto usa **Spec-Driven Development** para desenvolvimento assistido por 
 3. Atualize `specs/transform.md` com as regras de transformacao
 4. Crie `sql/schema.sql` (ALTER TABLE ou nova tabela)
 5. Implemente: `src/extract/camara_api.py`, `src/transform/<entidade>.py`, `src/load/upsert.py`
-6. Integre em `scripts/run_extraction.py` e `scripts/run_pipeline.py`
+6. Integre em `scripts/1_run_extraction.py` e `scripts/2_run_pipeline.py`
 7. Valide com re-execucao idempotente (sem duplicatas)
 
 ---
@@ -309,7 +360,7 @@ Este projeto usa **Spec-Driven Development** para desenvolvimento assistido por 
 → Se falhar com erro de encoding: use `pip install --only-binary :all: pandas sqlalchemy psycopg2-binary numpy`
 
 **`FileNotFoundError: Nenhum raw de deputados`**
-→ Execute a extracao primeiro: `python scripts/run_extraction.py`
+→ Execute a extracao primeiro: `python scripts/1_run_extraction.py`
 
 **`UnicodeDecodeError` ao instalar pacotes**
 → O Python 3.14 + caminho com caracteres especiais pode causar isso.

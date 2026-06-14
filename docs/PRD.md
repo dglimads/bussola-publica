@@ -114,9 +114,11 @@ A V1 entrega à Bússola Pública uma plataforma interna que:
 | **Custo de IA** | Total mensal gasto em OpenAI | ≤ US$ 10 |
 | **Idempotência** | Reexecução do pipeline gera duplicatas? | 0 duplicatas |
 
-### 2.3 Não-Objetivos (V1 explicitamente NÃO entrega)
+### 2.3 Não-Objetivos (escopo da V1)
 
-- ❌ Interface web/dashboard para usuário final (uso direto via SQL e tabelas do Supabase)
+> Nota: o **dashboard web** estava fora do escopo da V1, mas foi **entregue após a V1**
+> (painel Next.js ao vivo). Os demais itens abaixo seguem fora de escopo.
+
 - ❌ Integração com Senado, TSE ou outros legislativos
 - ❌ Análise de sentimento de discursos parlamentares
 - ❌ Predição de resultado de votação
@@ -166,8 +168,8 @@ A V1 entrega à Bússola Pública uma plataforma interna que:
 | Modelagem | Esquema dimensional (fato + dimensão) |
 | IA — Classificação | Classificação temática automática via embeddings (Caminho A do briefing) |
 | IA — Resumo | Resumo executivo de 3 linhas via LLM (Caminho B do briefing) |
-| Orquestração | Workflow n8n com schedule diário |
-| Alerta | Notificação externa (e-mail OU Telegram) para tema crítico |
+| Orquestração | Workflow n8n com schedule semanal |
+| Alerta | E-mail semanal para a equipe com o Top 5 da semana (tema crítico + nº de autores) |
 | Documentação | README, diagrama de arquitetura, dicionário de dados, documento de decisões de IA |
 | Apresentação | Pitch executivo de até 6 slides |
 
@@ -222,9 +224,9 @@ A V1 entrega à Bússola Pública uma plataforma interna que:
 | Campo | Descrição |
 |---|---|
 | **Ator** | Workflow n8n |
-| **Gatilho** | Nova proposição classificada com tema marcado como crítico (ex.: Tecnologia/IA, Tributário) |
-| **Fluxo principal** | 1. n8n consulta banco a cada execução<br>2. Identifica proposições novas em temas críticos<br>3. Monta payload de alerta<br>4. Envia via e-mail OU Telegram |
-| **Pós-condição** | Destinatário recebe alerta com link da proposição e resumo |
+| **Gatilho** | Cron semanal (segunda 08h BRT) |
+| **Fluxo principal** | 1. n8n consulta o Top 5 da semana (últimos 7 dias)<br>2. Ordena por tema crítico, depois nº de autores<br>3. Monta e-mail HTML<br>4. Envia via SMTP para a equipe |
+| **Pós-condição** | Equipe recebe e-mail com as 5 proposições e seus resumos |
 
 ### UC-05 — Consulta Analítica Ad-Hoc
 
@@ -367,9 +369,8 @@ flowchart LR
     end
 
     subgraph ORC["ORQUESTRAÇÃO"]
-        I[n8n<br/>schedule 06h diário] -->|trigger| B
-        I -->|consulta tema crítico| F
-        I -->|alerta| J[Email/Telegram]
+        I[n8n<br/>schedule semanal seg 08h] -->|consulta Top 5 da semana| F
+        I -->|e-mail HTML| J[Email SMTP - equipe]
     end
 
     K[GitHub<br/>código + DDL + workflow + prompts] -.->|versiona| B
@@ -439,11 +440,9 @@ flowchart LR
    ↓
 9. AI Summarizer identifica proposições sem resumo, chama LLM com prompt versionado, persiste
    ↓
-10. n8n consulta banco buscando proposições novas em temas críticos
+10. n8n (cron semanal) consulta o Top 5 da semana (tema crítico + nº de autores)
     ↓
-11. Se houver match, n8n dispara alerta (email/telegram)
-    ↓
-12. Log de execução é gravado
+11. Monta e-mail HTML e envia via SMTP para a equipe (sem proposições → não envia)
 ```
 
 ---
@@ -743,40 +742,34 @@ Resumo executivo (máx. 3 linhas):
 
 ### 11.1 Agendamento
 
-- **Frequência:** diária, 06h00 (horário de Brasília).
-- **Trigger:** node Cron do n8n.
-- **Tipo de execução:** incremental — apenas registros com `data_apresentacao >= hoje-1`.
+- **Frequência:** semanal, segunda-feira 08h00 (horário de Brasília) — cron `0 8 * * 1`.
+- **Trigger:** node Schedule (Cron) do n8n, timezone America/Sao_Paulo.
+- **Escopo:** o n8n cuida apenas do e-mail semanal. A ingestão (scripts 1–6) roda à parte, manualmente.
 
 ### 11.2 Estrutura do Workflow n8n
 
 ```
-[Cron 06h]
+[Cron seg 08h]
    ↓
-[Execute Command: python scripts/run_pipeline.py --incremental]
+[Postgres: SELECT Top 5 da semana (últimos 7 dias)]
+   (ORDER BY critico DESC, qtd_autores DESC, data DESC)
    ↓
-[Wait 30s]   ← garante que enriquecimento de IA terminou
+[Code: monta e-mail HTML — 0 linhas → retorna [] e não envia]
    ↓
-[Postgres: SELECT proposições com tema crítico nas últimas 24h]
-   ↓
-[IF results > 0]
-   ↓ SIM
-[Build payload de alerta]
-   ↓
-[Send Email OU Telegram message]
-   ↓
-[Postgres: INSERT em log_execucoes]
+[Send Email (SMTP): destinatários = equipe]
 ```
 
-### 11.3 Alertas
+### 11.3 E-mail semanal (Top 5)
 
-- **Canal V1:** e-mail (SMTP) ou Telegram Bot — escolha a definir.
-- **Trigger:** proposição cujo `tema.critico = TRUE` foi ingerida nas últimas 24h.
-- **Payload:** ID, tipo, ementa, resumo executivo, link oficial da Câmara, tema atribuído.
+- **Canal:** e-mail (SMTP). Telegram foi descartado.
+- **Destinatários (teste):** os integrantes da equipe (ver `dashboard/lib/equipe.ts`).
+- **Relevância:** tema crítico primeiro, depois maior nº de autores, desempate por data.
+- **Conteúdo de cada card:** ID, tipo, ementa, resumo executivo, tema, nº de autores, autor principal.
 
 ### 11.4 Tratamento de Falhas no Workflow
 
-- Falha do node de execução → n8n marca workflow como erro e dispara notificação ao operador.
-- Falha do envio de alerta → registra em log mas não bloqueia próximas execuções.
+- Falha do node de query/envio → n8n marca workflow como erro (visível no histórico de execuções).
+- Semana sem proposições → o node Code retorna `[]` e nenhum e-mail é enviado.
 
 ---
 
@@ -893,7 +886,7 @@ Resumo executivo (máx. 3 linhas):
 | E2 | README de apresentação | Markdown | `README.md` |
 | E3 | DDL versionada | SQL | `sql/schema.sql` |
 | E4 | Banco populado (≥30 dias) | PostgreSQL acessível | Supabase (URL leitura pública) |
-| E5 | Workflow n8n | JSON | `n8n/bussola_diario.json` |
+| E5 | Workflow n8n | JSON | `n8n/bussola_email_semanal.json` |
 | E6 | Prints de execução do n8n | PNG | `docs/prints/` |
 | E7 | Diagrama de arquitetura | PNG | `docs/arquitetura.png` |
 | E8 | Diagrama de modelo de dados | PNG | `docs/modelo_dados.png` |
@@ -906,7 +899,7 @@ Resumo executivo (máx. 3 linhas):
 
 | Critério do Briefing | Como esta V1 atende | Evidência |
 |---|---|---|
-| **Funcionamento** | Pipeline E2E roda em comando único | `python scripts/run_pipeline.py` |
+| **Funcionamento** | Pipeline E2E roda em comando único | `python scripts/2_run_pipeline.py` |
 | **Modelagem** | Esquema dimensional documentado | `sql/schema.sql` + `docs/modelo_dados.png` |
 | **IA aplicada** | IA gera campos consumidos pelo alerta n8n | Coluna `tema_id` aciona alerta; resumo aparece no e-mail |
 | **Automação** | n8n agendado executando diariamente | Log de execução + screenshot timestamped |
@@ -916,7 +909,7 @@ Resumo executivo (máx. 3 linhas):
 
 A V1 é considerada concluída quando **todos** os itens abaixo são verdadeiros:
 
-- [ ] `git clone` + `pip install -r requirements.txt` + `.env` preenchido → `python scripts/run_pipeline.py` executa sem erro
+- [ ] `git clone` + `pip install -r requirements.txt` + `.env` preenchido → `python scripts/2_run_pipeline.py` executa sem erro
 - [ ] Banco contém ≥30 dias de dados em todas as tabelas fato
 - [ ] ≥ 200 proposições com `tema_id` populado
 - [ ] ≥ 200 proposições com `resumo_executivo` populado
@@ -959,12 +952,16 @@ M0 ──> M1 ──> M2 ──> M3 ──┐
 
 ## 17. Roadmap Futuro (Pós-V1)
 
-Itens explicitamente fora do escopo da V1, mas mapeados para futura priorização:
+> **Já entregue após a V1:** autoria N:N (`ponte_proposicao_autores`), votos nominais
+> (`fato_votacao_votos`), heatmap tema × partido, **dashboard Next.js ao vivo** e o
+> workflow n8n de **e-mail semanal** (Top 5 da semana).
+
+Itens ainda fora de escopo, mapeados para futura priorização:
 
 | Tema | Item | Valor |
 |---|---|---|
 | **Cobertura** | Senado, TSE, Diário Oficial | Visão legislativa 360° |
-| **Dashboard** | Streamlit ou Metabase sobre o Supabase | Auto-atendimento para analistas |
+| **Coerência** | Score de fidelidade partidária sobre os votos nominais | Sinal analítico inédito |
 | **API exposta** | REST + auth, com SDKs em Python e JS | Habilita produto B2B revenue-gen |
 | **RAG** | Q&A sobre histórico legislativo via LLM + embeddings | "O que foi votado sobre IA nos últimos 12 meses?" |
 | **Multi-tenant** | Separação por cliente, com temas custom por cliente | Personalização B2B |
@@ -1031,16 +1028,16 @@ bussola-publica/
 │   ├── load/
 │   └── ai/
 ├── scripts/
-│   ├── run_extraction.py
-│   ├── run_pipeline.py
-│   └── run_ai_enrichment.py
+│   ├── 1_run_extraction.py
+│   ├── 2_run_pipeline.py
+│   └── 3_run_ai_enrichment.py
 ├── sql/
 │   ├── schema.sql
 │   └── seeds_temas.sql
 ├── prompts/
 │   └── resumo_executivo.md
 ├── n8n/
-│   └── bussola_diario.json
+│   └── bussola_email_semanal.json
 ├── docs/
 │   ├── arquitetura.png
 │   ├── modelo_dados.png

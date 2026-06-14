@@ -534,7 +534,7 @@ def fetch_votacao_orientacoes(
     Salva em: data/raw/votacoes_orientacoes/<timestamp>_<votacao_id>.json
     """
     client = client or CamaraAPIClient()
-    return client.save_raw(f"/votacoes/{votacao_id}/orientacoes")
+    return client.save_one(f"/votacoes/{votacao_id}/orientacoes")
 
 
 def fetch_votacao_votos(
@@ -554,7 +554,7 @@ def fetch_votacao_votos(
     Salva em: data/raw/votacoes_votos/<timestamp>_<votacao_id>.json
     """
     client = client or CamaraAPIClient()
-    return client.save_raw(f"/votacoes/{votacao_id}/votos")
+    return client.save_one(f"/votacoes/{votacao_id}/votos")
 
 
 # =============================================================================
@@ -610,7 +610,7 @@ def fetch_proposicao_autores(
     Salva em: data/raw/proposicoes_autores/<timestamp>_<proposicao_id>.json
     """
     client = client or CamaraAPIClient()
-    return client.save_raw(f"/proposicoes/{proposicao_id}/autores")
+    return client.save_one(f"/proposicoes/{proposicao_id}/autores")
 
 
 def fetch_proposicao_tramitacoes(

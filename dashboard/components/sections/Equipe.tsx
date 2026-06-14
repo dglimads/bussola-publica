@@ -1,5 +1,5 @@
 "use client";
-import { Mail, Phone, Users } from "lucide-react";
+import { Mail, Phone, Users, Linkedin } from "lucide-react";
 import { Panel } from "@/components/ui/Panel";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { EQUIPE, iniciais, telHref } from "@/lib/equipe";
@@ -24,15 +24,45 @@ export function Equipe() {
       </Panel>
 
       <Panel>
-        <div className="panel-head"><div><Eyebrow>Contatos</Eyebrow><h3>Membros</h3></div><span className="muted-tag"><Users size={11} style={{ verticalAlign: "-1px", marginRight: 5 }} />{EQUIPE.length}</span></div>
+        <div className="panel-head">
+          <div><Eyebrow>Contatos</Eyebrow><h3>Membros</h3></div>
+          <span className="muted-tag">
+            <Users size={11} style={{ verticalAlign: "-1px", marginRight: 5 }} />
+            {EQUIPE.length}
+          </span>
+        </div>
+
         <div className="team-grid">
           {EQUIPE.map((m) => (
             <div key={m.email} className="member">
-              <div className="member-av">{iniciais(m.nome)}</div>
+              <div className="member-av">
+                {m.foto
+                  ? <img src={m.foto} alt={m.nome} className="member-photo" />
+                  : <span>{iniciais(m.nome)}</span>
+                }
+              </div>
               <div className="member-main">
                 <span className="member-name">{m.nome}</span>
-                <a className="member-mail" href={`mailto:${m.email}`}><Mail size={12} /> {m.email}</a>
-                <a className="member-tel" href={telHref(m.telefone)}><Phone size={12} /> {m.telefone}</a>
+                <div className="member-links">
+                  {m.linkedin ? (
+                    <a
+                      className="member-linkedin"
+                      href={m.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Linkedin size={12} /> LinkedIn
+                    </a>
+                  ) : (
+                    <span className="member-linkedin-empty">LinkedIn em breve</span>
+                  )}
+                  <a className="member-mail" href={`mailto:${m.email}`}>
+                    <Mail size={11} /> {m.email}
+                  </a>
+                  <a className="member-tel" href={telHref(m.telefone)}>
+                    <Phone size={11} /> {m.telefone}
+                  </a>
+                </div>
               </div>
             </div>
           ))}

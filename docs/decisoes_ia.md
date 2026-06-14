@@ -112,7 +112,7 @@ Re-execucoes nao geram custo adicional para registros ja processados.
 | Custo total de IA no periodo | <= US$ 10 | US$ 0.00 (bloqueado por quota) |
 
 **Bloqueio atual:** conta OpenAI sem creditos de billing. Apos adicionar credito em
-platform.openai.com, rodar: `python scripts/run_ai_enrichment.py --limite 100`
+platform.openai.com, rodar: `python scripts/3_run_ai_enrichment.py --limite 100`
 
 ---
 

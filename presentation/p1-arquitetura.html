@@ -6,26 +6,26 @@
 <title>Bússola Pública — Arquitetura | Pós-Tech Engenharia de Dados Xperiun</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --font-display: 'Instrument Serif', Georgia, serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
-    --font-editorial: 'Newsreader', 'Georgia', serif;
-    --font-mono: 'Fira Code', 'SF Mono', Consolas, monospace;
-    --bg: #08080a; --surface: #111114; --surface2: #19191e; --surface-elevated: #222228;
-    --border: rgba(120,160,220,0.08); --border-bright: rgba(120,160,220,0.18);
-    --text: #eaedf2; --text-dim: #6e7a8c;
-    --accent: #4a9eff; --accent-dim: rgba(74,158,255,0.10); --accent2: #3d8ae6;
-    --silver: #b0bec5; --silver-bright: #cfd8dc; --silver-dim: rgba(176,190,197,0.10);
-    --gold: #d4af37; --gold-dim: rgba(212,175,55,0.10);
-    --orange: #ef9000; --orange-dim: rgba(239,144,0,0.10);
-    --green: #3fb950; --green-dim: rgba(63,185,80,0.10);
-    --red: #f85149; --red-dim: rgba(248,81,73,0.10);
-    --blue: #60a5fa; --blue-dim: rgba(96,165,250,0.10);
-    --purple: #a78bfa; --purple-dim: rgba(167,139,250,0.10);
-    --cyan: #22d3ee; --cyan-dim: rgba(34,211,238,0.10);
-    --code-bg: #060608; --code-text: #c8d0dc;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Space Grotesk', system-ui, sans-serif;
+    --font-editorial: 'Space Grotesk', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    --bg: #0A0F1C; --surface: #111A2E; --surface2: #0E1626; --surface-elevated: #1A2236;
+    --border: rgba(148,163,184,0.14); --border-bright: rgba(148,163,184,0.28);
+    --text: #EAF0FB; --text-dim: #93A4C0;
+    --accent: #3BE0C9; --accent-dim: rgba(59,224,201,0.10); --accent2: #2BBFA9;
+    --silver: #93A4C0; --silver-bright: #C5D2E8; --silver-dim: rgba(147,164,192,0.10);
+    --gold: #E5B567; --gold-dim: rgba(229,181,103,0.10);
+    --orange: #F5A524; --orange-dim: rgba(245,165,36,0.10);
+    --green: #6FCF97; --green-dim: rgba(111,207,151,0.10);
+    --red: #FF5C6C; --red-dim: rgba(255,92,108,0.10);
+    --blue: #7CC4FF; --blue-dim: rgba(124,196,255,0.10);
+    --purple: #7CC4FF; --purple-dim: rgba(124,196,255,0.10);
+    --cyan: #3BE0C9; --cyan-dim: rgba(59,224,201,0.10);
+    --code-bg: #0B1220; --code-text: #C5D2E8;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:var(--font-body); color:var(--text); background:var(--bg); overflow:hidden; }
@@ -50,7 +50,7 @@
   .slide.visible .reveal:nth-child(8){transition-delay:0.8s}
   @media(prefers-reduced-motion:reduce){.slide,.slide .reveal{opacity:1!important;transform:none!important;transition:none!important}}
   .deck-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--silver));z-index:100;transition:width 0.3s ease;pointer-events:none}
-  .deck-dots{position:fixed;right:clamp(12px,2vw,24px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;padding:8px;background:rgba(8,8,10,0.6);border-radius:20px;backdrop-filter:blur(4px)}
+  .deck-dots{position:fixed;right:clamp(12px,2vw,24px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;padding:8px;background:rgba(10,15,28,0.7);border-radius:20px;backdrop-filter:blur(4px)}
   .deck-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);opacity:0.3;border:none;padding:0;cursor:pointer;transition:opacity 0.2s,transform 0.2s}
   .deck-dot:hover{opacity:0.6}
   .deck-dot.active{opacity:1;transform:scale(1.5);background:var(--accent)}
@@ -64,15 +64,15 @@
   .slide__label{font-family:var(--font-mono);font-size:clamp(12px,1.4vw,15px);font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--accent);margin-bottom:16px}
   .slide__decor{position:absolute;pointer-events:none;z-index:0}
   .gradient-text{background:linear-gradient(135deg,var(--accent) 0%,var(--silver-bright) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .slide--title{justify-content:center;align-items:center;text-align:center;background-image:radial-gradient(ellipse at 50% 20%,rgba(74,158,255,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(176,190,197,0.03) 0%,transparent 40%)}
+  .slide--title{justify-content:center;align-items:center;text-align:center;background-image:radial-gradient(ellipse at 50% 20%,rgba(59,224,201,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(147,164,192,0.03) 0%,transparent 40%)}
   @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
   .shimmer-text{background:linear-gradient(135deg,var(--accent) 0%,#ffffff 30%,var(--silver-bright) 60%,var(--accent) 100%);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 6s ease infinite}
   @keyframes flow-right{from{stroke-dashoffset:24}to{stroke-dashoffset:0}}
   .flow-r{stroke-dasharray:12 12;animation:flow-right 1.2s linear infinite}
-  @keyframes pulse-glow{0%,100%{box-shadow:0 0 15px rgba(74,158,255,0.12),0 0 30px rgba(74,158,255,0.04)}50%{box-shadow:0 0 25px rgba(74,158,255,0.25),0 0 50px rgba(74,158,255,0.08)}}
-  @keyframes pulse-gold{0%,100%{box-shadow:0 0 15px rgba(212,175,55,0.12),0 0 30px rgba(212,175,55,0.04)}50%{box-shadow:0 0 25px rgba(212,175,55,0.25),0 0 50px rgba(212,175,55,0.08)}}
-  @keyframes pulse-green{0%,100%{box-shadow:0 0 15px rgba(63,185,80,0.12),0 0 30px rgba(63,185,80,0.04)}50%{box-shadow:0 0 25px rgba(63,185,80,0.25),0 0 50px rgba(63,185,80,0.08)}}
-  @keyframes pulse-orange{0%,100%{box-shadow:0 0 15px rgba(239,144,0,0.12),0 0 30px rgba(239,144,0,0.04)}50%{box-shadow:0 0 25px rgba(239,144,0,0.25),0 0 50px rgba(239,144,0,0.08)}}
+  @keyframes pulse-glow{0%,100%{box-shadow:0 0 15px rgba(59,224,201,0.12),0 0 30px rgba(59,224,201,0.04)}50%{box-shadow:0 0 25px rgba(59,224,201,0.25),0 0 50px rgba(59,224,201,0.08)}}
+  @keyframes pulse-gold{0%,100%{box-shadow:0 0 15px rgba(229,181,103,0.12),0 0 30px rgba(229,181,103,0.04)}50%{box-shadow:0 0 25px rgba(229,181,103,0.25),0 0 50px rgba(229,181,103,0.08)}}
+  @keyframes pulse-green{0%,100%{box-shadow:0 0 15px rgba(111,207,151,0.12),0 0 30px rgba(111,207,151,0.04)}50%{box-shadow:0 0 25px rgba(111,207,151,0.25),0 0 50px rgba(111,207,151,0.08)}}
+  @keyframes pulse-orange{0%,100%{box-shadow:0 0 15px rgba(245,165,36,0.12),0 0 30px rgba(245,165,36,0.04)}50%{box-shadow:0 0 25px rgba(245,165,36,0.25),0 0 50px rgba(245,165,36,0.08)}}
   @keyframes flow-dash{to{stroke-dashoffset:-20}}
   .flow-line{animation:flow-dash 1.2s linear infinite}
   @keyframes bar-fill{from{width:0}}
@@ -115,7 +115,7 @@
   .phase-name{font-family:var(--font-mono);font-size:clamp(0.72rem,1vw,0.82rem);font-weight:600;margin-bottom:0.3rem;letter-spacing:0.04em}
   .phase-desc{font-family:var(--font-editorial);font-size:clamp(0.7rem,0.95vw,0.8rem);font-style:italic;color:var(--text-dim);line-height:1.4}
   .phase-connector{display:flex;align-items:center;color:var(--text-dim);font-size:1.2rem;flex-shrink:0;padding:0 0.25rem}
-  .terminal{background:var(--code-bg);border:1px solid rgba(74,158,255,0.1);border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,0.4),inset 0 1px 0 rgba(74,158,255,0.03)}
+  .terminal{background:var(--code-bg);border:1px solid rgba(59,224,201,0.1);border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,0.4),inset 0 1px 0 rgba(59,224,201,0.03)}
   .terminal__bar{background:var(--surface);padding:11px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
   .terminal__dot{width:11px;height:11px;border-radius:50%}
   .terminal__body{padding:clamp(16px,2.5vh,24px) clamp(18px,2.5vw,24px);font-family:var(--font-mono);font-size:clamp(0.78rem,1.2vw,0.92rem);line-height:1.85;color:var(--code-text)}
@@ -150,13 +150,13 @@
   <defs>
     <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="glow-strong"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <marker id="ah-blue" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#4a9eff"/></marker>
-    <marker id="ah-silver" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#b0bec5"/></marker>
-    <marker id="ah-gold" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#d4af37"/></marker>
-    <marker id="ah-green" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#3fb950"/></marker>
-    <marker id="ah-orange" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#ef9000"/></marker>
-    <linearGradient id="flow-grad-1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4a9eff"/><stop offset="100%" stop-color="#b0bec5"/></linearGradient>
-    <linearGradient id="flow-grad-2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#b0bec5"/><stop offset="100%" stop-color="#d4af37"/></linearGradient>
+    <marker id="ah-blue" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#3BE0C9"/></marker>
+    <marker id="ah-silver" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#93A4C0"/></marker>
+    <marker id="ah-gold" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#E5B567"/></marker>
+    <marker id="ah-green" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#6FCF97"/></marker>
+    <marker id="ah-orange" viewBox="0 0 12 8" refX="11" refY="4" markerWidth="8" markerHeight="6" orient="auto"><path d="M0,0 L12,4 L0,8 L3,4 Z" fill="#F5A524"/></marker>
+    <linearGradient id="flow-grad-1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3BE0C9"/><stop offset="100%" stop-color="#93A4C0"/></linearGradient>
+    <linearGradient id="flow-grad-2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#93A4C0"/><stop offset="100%" stop-color="#E5B567"/></linearGradient>
   </defs>
 </svg>
 
@@ -178,11 +178,11 @@
   <!-- Compass icon decorativo -->
   <div class="reveal" style="margin-bottom:clamp(16px,2.5vh,28px)">
     <svg width="clamp(48px,6vw,72px)" height="clamp(48px,6vw,72px)" viewBox="0 0 72 72" fill="none">
-      <circle cx="36" cy="36" r="34" stroke="rgba(74,158,255,0.2)" stroke-width="1.5"/>
-      <circle cx="36" cy="36" r="24" stroke="rgba(74,158,255,0.1)" stroke-width="1"/>
-      <polygon points="36,10 42,36 36,34 30,36" fill="#4a9eff" opacity="0.9" filter="url(#glow)"/>
-      <polygon points="36,62 30,36 36,38 42,36" fill="#b0bec5" opacity="0.7"/>
-      <circle cx="36" cy="36" r="3" fill="#4a9eff"/>
+      <circle cx="36" cy="36" r="34" stroke="rgba(59,224,201,0.2)" stroke-width="1.5"/>
+      <circle cx="36" cy="36" r="24" stroke="rgba(59,224,201,0.1)" stroke-width="1"/>
+      <polygon points="36,10 42,36 36,34 30,36" fill="#3BE0C9" opacity="0.9" filter="url(#glow)"/>
+      <polygon points="36,62 30,36 36,38 42,36" fill="#93A4C0" opacity="0.7"/>
+      <circle cx="36" cy="36" r="3" fill="#3BE0C9"/>
     </svg>
   </div>
 
@@ -201,14 +201,23 @@
     <span class="tag tag-accent">Sprint 1 — Extração</span>
     <span class="tag tag-orange">Sprint 2 — Transformação</span>
     <span class="tag tag-gold">Sprint 3 — IA</span>
-    <span class="tag tag-silver">Python &middot; PostgreSQL &middot; OpenAI</span>
+    <span class="tag tag-cyan">Pós V1 — Autoria &amp; Votos</span>
+    <span class="tag tag-silver">Python &middot; PostgreSQL &middot; OpenAI &middot; Next.js</span>
+  </div>
+
+  <!-- Assinatura de entrega — logo Xperiun sutil -->
+  <div class="reveal" style="position:absolute;bottom:clamp(20px,4vh,40px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0.55">
+    <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--text-dim)">Entregue para</span>
+    <svg viewBox="0 0 756 192.57" width="96" height="auto" aria-label="Xperiun" style="opacity:0.85">
+      <path d="M58.44 23.24C47.68 34 52.04 55.8 68.18 71.94l9.74 9.74c9.13 9.13 19.93 13.65 26.27 11.52L87.65 71.94l21.26 16.54c2.13-6.35-2.39-17.15-11.52-26.27L58.44 23.24zm50.49 80.91c2.08 6.36-2.44 17.12-11.54 26.22l-29.22 29.21C41.28 186.48 10.76 199.56 0 188.8l77.91-77.91c9.1-9.1 19.87-13.62 26.22-11.54l-35.96 40.76 40.76-35.96zm17.68 26.22c-9.13-9.13-13.65-19.93-11.52-26.27l21.26 16.54-16.54-21.26c6.35-2.13 17.15 2.39 26.27 11.52l9.74 9.74c16.14 16.14 20.5 37.94 9.74 48.69l-38.95-38.96zm-11.54-41.95c-2.08-6.36 2.44-17.12 11.54-26.22l29.22-29.21C182.72 6.09 213.24-6.99 224 3.77l-77.91 77.91c-9.1 9.1-19.87 13.62-26.22 11.54l35.96-40.76-40.76 35.96zM644 124.28c-17.65 0-32-14.35-32-32v-24h8v24c0 13.23 10.77 24 24 24s24-10.77 24-24v-24h8v24c0 17.65-14.35 32-32 32zm-328 0h-8v-52c0-2.21 1.79-4 4-4h47.62c10.92 0 20.11 8.6 20.37 19.52.27 11.25-8.81 20.48-19.99 20.48h-44v16zm0-24h44c6.62 0 12-5.38 12-12s-5.38-12-12-12h-44v24zm272 24h-8v-56h8v56zm112 0h-8v-52c0-2.21 1.79-4 4-4h4.52c1.06 0 2.08.42 2.83 1.17L748 114.11V68.28h8v52c0 2.21-1.79 4-4 4h-3.48c-1.06 0-2.08-.42-2.83-1.17L700 77.42v46.86zm-438.14-28 30.14 28h-11.71L256 101.72l-24.29 22.56H220l30.14-28-30.14-28h11.71L256 90.85l24.29-22.56H292l-30.14 27.99zm142.14-8v4h56v8h-56v4c0 6.62 5.38 12 12 12h44v8h-44c-11.03 0-20-8.97-20-20v-16c0-11.03 8.97-20 20-20h44v8h-44c-6.62 0-12 5.39-12 12zm139.64 36H556l-19.65-16.01c11.03-.19 19.91-9.34 19.64-20.47-.26-10.92-9.45-19.52-20.37-19.52H488c-2.21 0-4 1.79-4 4v52h8v-16h32l19.64 16zm-51.64-48h44c6.62 0 12 5.38 12 12s-5.38 12-12 12h-44v-24z" style="fill:#93A4C0"/>
+    </svg>
   </div>
 </section>
 
 <!-- ================================================================ -->
 <!-- SLIDE 1 — ROADMAP DOS 3 SPRINTS                                   -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(74,158,255,0.05) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(59,224,201,0.05) 0%,transparent 50%)">
   <p class="slide__label reveal">PROJETO INTEGRADOR</p>
   <h2 class="slide__heading reveal" style="font-size:clamp(32px,6vw,58px);font-style:italic;margin-bottom:clamp(4px,0.8vh,10px)">
     3 Sprints, <span style="color:var(--accent)">1 Pipeline Completo</span>
@@ -258,19 +267,19 @@
 
   <div class="reveal" style="margin-top:clamp(10px,1.5vh,18px)">
     <div class="phase-flow">
-      <div class="phase-card" style="border-color:rgba(74,158,255,0.15)">
+      <div class="phase-card" style="border-color:rgba(59,224,201,0.15)">
         <div class="phase-num" style="color:var(--accent)">API</div>
         <div class="phase-name">Dados Brutos</div>
         <div class="phase-desc">dadosabertos.camara.leg.br</div>
       </div>
       <div class="phase-connector">&rarr;</div>
-      <div class="phase-card" style="border-color:rgba(239,144,0,0.15)">
+      <div class="phase-card" style="border-color:rgba(245,165,36,0.15)">
         <div class="phase-num" style="color:var(--orange)">ETL</div>
         <div class="phase-name">Modelo Dimensional</div>
         <div class="phase-desc">Estrela no PostgreSQL</div>
       </div>
       <div class="phase-connector">&rarr;</div>
-      <div class="phase-card" style="border-color:rgba(212,175,55,0.15);animation:pulse-gold 4s ease-in-out infinite">
+      <div class="phase-card" style="border-color:rgba(229,181,103,0.15);animation:pulse-gold 4s ease-in-out infinite">
         <div class="phase-num" style="color:var(--gold)">IA</div>
         <div class="phase-name">Dados Inteligentes</div>
         <div class="phase-desc">GPT-4o-mini + pgvector</div>
@@ -293,7 +302,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 2 — DIVIDER SPRINT 1                                        -->
 <!-- ================================================================ -->
-<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(74,158,255,0.06) 0%,transparent 50%)">
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(59,224,201,0.06) 0%,transparent 50%)">
   <div class="slide__number" style="background:linear-gradient(135deg,var(--accent) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">01</div>
   <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 1 &middot; EXTRAÇÃO</p>
   <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
@@ -307,7 +316,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 3 — CAMARAAPICLLIENT                                        -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 20%,rgba(74,158,255,0.05) 0%,transparent 40%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 20%,rgba(59,224,201,0.05) 0%,transparent 40%)">
   <p class="slide__label reveal">SPRINT 1 &middot; EXTRACT</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     <span style="color:var(--accent)">CamaraAPIClient</span> — robusto por design
@@ -317,7 +326,7 @@
     <!-- LEFT: terminal com código -->
     <div class="terminal">
       <div class="terminal__bar">
-        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#FF5C6C"></span>
         <span class="terminal__dot" style="background:#febc2e"></span>
         <span class="terminal__dot" style="background:#28c840"></span>
         <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">src/extract/camara_api.py</span>
@@ -343,15 +352,15 @@
 
     <!-- RIGHT: cards de features -->
     <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
-      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-glow 4s ease-in-out infinite">
+      <div style="background:var(--surface);border:1px solid rgba(59,224,201,0.2);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-glow 4s ease-in-out infinite">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">RETRY EXPONENCIAL</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">3 tentativas com backoff 1s → 2s → 4s. API pública com instabilidades ocasionais.</p>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(176,190,197,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(147,164,192,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--silver);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PAGINAÇÃO AUTOMÁTICA</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">100 itens/página, itera automaticamente até última página &mdash; transparente para quem chama.</p>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(229,181,103,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PERSISTÊNCIA JSON</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Dados brutos em <span style="font-family:var(--font-mono);color:var(--text)">data/raw/</span> com <span style="font-family:var(--font-mono);color:var(--text)">ensure_ascii=False</span>. Acentos preservados.</p>
       </div>
@@ -372,37 +381,37 @@
 <!-- ================================================================ -->
 <!-- SLIDE 4 — ENDPOINTS DA API                                        -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 70% 20%,rgba(74,158,255,0.04) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 70% 20%,rgba(59,224,201,0.04) 0%,transparent 50%)">
   <p class="slide__label reveal">SPRINT 1 &middot; ENDPOINTS</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     O que a <span style="color:var(--accent)">API oferece</span>
   </h2>
 
   <div class="reveal" style="flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(8px,1.2vw,14px);margin-top:clamp(14px,2.5vh,24px);align-items:start">
-    <div class="tier-card" style="border-color:rgba(74,158,255,0.2)">
+    <div class="tier-card" style="border-color:rgba(59,224,201,0.2)">
       <h4 style="color:var(--accent)">/deputados</h4>
       <div class="tier-sub" style="color:var(--accent)">Dimensão</div>
-      <p>513 deputados federais em exercício. Nome, partido, UF, foto, contatos.</p>
+      <p>523 deputados federais. Nome, partido, UF, foto, contatos.</p>
     </div>
-    <div class="tier-card" style="border-color:rgba(176,190,197,0.2)">
+    <div class="tier-card" style="border-color:rgba(147,164,192,0.2)">
       <h4 style="color:var(--silver)">/partidos</h4>
       <div class="tier-sub" style="color:var(--silver)">Dimensão</div>
       <p>21 partidos com sigla, nome completo e membros do diretório.</p>
     </div>
-    <div class="tier-card" style="border-color:rgba(239,144,0,0.2)">
+    <div class="tier-card" style="border-color:rgba(245,165,36,0.2)">
       <h4 style="color:var(--orange)">/proposicoes</h4>
       <div class="tier-sub" style="color:var(--orange)">Fato</div>
       <p>PLs, PECs, MPVs. Ementa, autores, situação e data de apresentação.</p>
     </div>
-    <div class="tier-card" style="border-color:rgba(212,175,55,0.2)">
+    <div class="tier-card" style="border-color:rgba(229,181,103,0.2)">
       <h4 style="color:var(--gold)">/votacoes</h4>
       <div class="tier-sub" style="color:var(--gold)">Fato</div>
       <p>Votações nominais com resultado, data e proposição relacionada.</p>
     </div>
-    <div class="tier-card" style="border-color:rgba(63,185,80,0.2)">
+    <div class="tier-card" style="border-color:rgba(111,207,151,0.2)">
       <h4 style="color:var(--green)">/despesas</h4>
       <div class="tier-sub" style="color:var(--green)">Fato CEAP</div>
-      <p>~500 calls HTTP &mdash; uma por deputado. 187k registros de gastos parlamentares.</p>
+      <p>~500 calls HTTP &mdash; uma por deputado. ~145k registros de gastos (pipeline isolado).</p>
     </div>
   </div>
 
@@ -410,26 +419,26 @@
   <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
     <svg viewBox="0 0 900 80" width="100%" height="80" style="overflow:visible">
       <!-- API box -->
-      <rect x="10" y="20" width="140" height="40" rx="8" fill="rgba(74,158,255,0.06)" stroke="rgba(74,158,255,0.25)" stroke-width="1.5"/>
-      <text x="80" y="45" text-anchor="middle" font-family="'Fira Code',monospace" font-size="13" fill="#4a9eff">API Câmara</text>
+      <rect x="10" y="20" width="140" height="40" rx="8" fill="rgba(59,224,201,0.06)" stroke="rgba(59,224,201,0.25)" stroke-width="1.5"/>
+      <text x="80" y="45" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="13" fill="#3BE0C9">API Câmara</text>
       <!-- Arrow -->
       <line x1="152" y1="40" x2="205" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-blue)"/>
       <!-- fetch_* box -->
-      <rect x="210" y="20" width="160" height="40" rx="8" fill="rgba(176,190,197,0.06)" stroke="rgba(176,190,197,0.2)" stroke-width="1.5"/>
-      <text x="290" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#b0bec5">fetch_deputados()</text>
-      <text x="290" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">+ paginação + retry</text>
+      <rect x="210" y="20" width="160" height="40" rx="8" fill="rgba(147,164,192,0.06)" stroke="rgba(147,164,192,0.2)" stroke-width="1.5"/>
+      <text x="290" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#93A4C0">fetch_deputados()</text>
+      <text x="290" y="55" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">+ paginação + retry</text>
       <!-- Arrow -->
       <line x1="372" y1="40" x2="425" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-silver)"/>
       <!-- JSON box -->
-      <rect x="430" y="20" width="160" height="40" rx="8" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.2)" stroke-width="1.5"/>
-      <text x="510" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">data/raw/*.json</text>
-      <text x="510" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">ensure_ascii=False</text>
+      <rect x="430" y="20" width="160" height="40" rx="8" fill="rgba(229,181,103,0.06)" stroke="rgba(229,181,103,0.2)" stroke-width="1.5"/>
+      <text x="510" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#E5B567">data/raw/*.json</text>
+      <text x="510" y="55" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">ensure_ascii=False</text>
       <!-- Arrow -->
       <line x1="592" y1="40" x2="645" y2="40" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="6 4" class="flow-line" marker-end="url(#ah-gold)"/>
       <!-- Transform ready box -->
-      <rect x="650" y="20" width="240" height="40" rx="8" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.2)" stroke-width="1.5"/>
-      <text x="770" y="40" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#3fb950">pronto para Sprint 2</text>
-      <text x="770" y="55" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">idempotente — reexecutável</text>
+      <rect x="650" y="20" width="240" height="40" rx="8" fill="rgba(111,207,151,0.06)" stroke="rgba(111,207,151,0.2)" stroke-width="1.5"/>
+      <text x="770" y="40" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#6FCF97">pronto para Sprint 2</text>
+      <text x="770" y="55" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">idempotente — reexecutável</text>
     </svg>
   </div>
 
@@ -438,8 +447,8 @@
       Cada <code style="font-family:var(--font-mono);color:var(--accent);background:var(--accent-dim);padding:2px 6px;border-radius:4px">fetch_*()</code> retorna lista de dicts prontos para o Pandas &mdash; sem transformação prévia.
     </p>
     <div style="display:flex;gap:0.5rem;flex-shrink:0">
-      <span class="tag tag-accent">run_extraction.py</span>
-      <span class="tag tag-silver">~20min (com CEAP)</span>
+      <span class="tag tag-accent">1_run_extraction.py</span>
+      <span class="tag tag-silver">CEAP separada: 6_run_despesas.py</span>
     </div>
   </div>
 </section>
@@ -447,7 +456,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 5 — DIVIDER SPRINT 2                                        -->
 <!-- ================================================================ -->
-<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(239,144,0,0.06) 0%,transparent 50%)">
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(245,165,36,0.06) 0%,transparent 50%)">
   <div class="slide__number" style="background:linear-gradient(135deg,var(--orange) 0%,var(--gold) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">02</div>
   <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 2 &middot; TRANSFORMAÇÃO &amp; CARGA</p>
   <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
@@ -464,13 +473,13 @@
 <section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px)">
   <p class="slide__label reveal">SPRINT 2 &middot; PIPELINE E2E</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
-    <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--orange)">run_pipeline.py</code> — três camadas
+    <code style="font-family:var(--font-mono);font-size:0.8em;color:var(--orange)">2_run_pipeline.py</code> — três camadas
   </h2>
 
   <!-- Phase flow: Extract → Transform → Load -->
   <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
     <div class="phase-flow">
-      <div class="phase-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+      <div class="phase-card" style="border-color:rgba(59,224,201,0.2);animation:pulse-glow 4s ease-in-out infinite">
         <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">📥</div>
         <div class="phase-num" style="color:var(--accent)">Extract</div>
         <div class="phase-name">CamaraAPIClient</div>
@@ -483,10 +492,10 @@
       <div class="phase-connector">
         <svg width="40" height="40" viewBox="0 0 40 40">
           <line x1="5" y1="20" x2="30" y2="20" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="5 3" class="flow-line"/>
-          <polygon points="28,15 38,20 28,25" fill="#b0bec5"/>
+          <polygon points="28,15 38,20 28,25" fill="#93A4C0"/>
         </svg>
       </div>
-      <div class="phase-card" style="border-color:rgba(239,144,0,0.2);animation:pulse-orange 4s ease-in-out infinite 1s">
+      <div class="phase-card" style="border-color:rgba(245,165,36,0.2);animation:pulse-orange 4s ease-in-out infinite 1s">
         <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">⚙️</div>
         <div class="phase-num" style="color:var(--orange)">Transform</div>
         <div class="phase-name">Pandas + Limpeza</div>
@@ -499,10 +508,10 @@
       <div class="phase-connector">
         <svg width="40" height="40" viewBox="0 0 40 40">
           <line x1="5" y1="20" x2="30" y2="20" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="5 3" class="flow-line"/>
-          <polygon points="28,15 38,20 28,25" fill="#d4af37"/>
+          <polygon points="28,15 38,20 28,25" fill="#E5B567"/>
         </svg>
       </div>
-      <div class="phase-card" style="border-color:rgba(63,185,80,0.2);animation:pulse-green 4s ease-in-out infinite 2s">
+      <div class="phase-card" style="border-color:rgba(111,207,151,0.2);animation:pulse-green 4s ease-in-out infinite 2s">
         <div style="font-size:clamp(2rem,4vw,3rem);margin-bottom:8px">💾</div>
         <div class="phase-num" style="color:var(--green)">Load</div>
         <div class="phase-name">SQLAlchemy Upsert</div>
@@ -519,15 +528,15 @@
   <div class="reveal" style="margin-top:clamp(12px,2vh,20px)">
     <div class="terminal">
       <div class="terminal__bar">
-        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#FF5C6C"></span>
         <span class="terminal__dot" style="background:#febc2e"></span>
         <span class="terminal__dot" style="background:#28c840"></span>
         <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">Terminal</span>
       </div>
       <div class="terminal__body" style="font-size:clamp(0.72rem,1vw,0.85rem);line-height:1.6">
-        <span class="terminal__prompt">$</span> python scripts/run_pipeline.py<br>
+        <span class="terminal__prompt">$</span> python scripts/2_run_pipeline.py<br>
         <span style="color:var(--accent)">[INFO]</span> Extraindo 21 partidos... <span style="color:var(--green)">✓ 21 carregados</span><br>
-        <span style="color:var(--accent)">[INFO]</span> Extraindo 513 deputados... <span style="color:var(--green)">✓ 513 carregados</span><br>
+        <span style="color:var(--accent)">[INFO]</span> Extraindo 523 deputados... <span style="color:var(--green)">✓ 523 carregados</span><br>
         <span style="color:var(--accent)">[INFO]</span> Extraindo proposições... <span style="color:var(--green)">✓ 100 carregadas</span><br>
         <span style="color:var(--accent)">[INFO]</span> Extraindo votações... <span style="color:var(--green)">✓ 100 carregadas</span><br>
         <span style="color:var(--orange)">[INFO]</span> Pipeline concluído em 47s &mdash; 0 erros, 0 duplicatas
@@ -550,66 +559,89 @@
 <!-- ================================================================ -->
 <!-- SLIDE 7 — MODELO DIMENSIONAL (STAR SCHEMA)                        -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 30%,rgba(239,144,0,0.04) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 30%,rgba(245,165,36,0.04) 0%,transparent 50%)">
   <p class="slide__label reveal">SPRINT 2 &middot; MODELO DE DADOS</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     Esquema <span style="color:var(--orange)">estrela</span> no PostgreSQL
   </h2>
 
   <div class="reveal" style="flex:1;margin-top:clamp(12px,2vh,20px)">
-    <svg viewBox="0 0 960 420" width="100%" style="max-height:60vh;overflow:visible">
-      <!-- Conexões das fatos com dim_deputados -->
-      <line x1="480" y1="210" x2="320" y2="130" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <line x1="480" y1="210" x2="480" y2="80" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <line x1="480" y1="210" x2="640" y2="130" stroke="rgba(74,158,255,0.25)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <line x1="480" y1="210" x2="200" y2="320" stroke="rgba(176,190,197,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <line x1="480" y1="210" x2="760" y2="320" stroke="rgba(176,190,197,0.2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+    <svg viewBox="0 0 980 470" width="100%" style="max-height:62vh;overflow:visible">
+      <!-- ===== Conexões (desenhadas antes das caixas) ===== -->
+      <!-- partido_id: partidos -> deputados -->
+      <line x1="180" y1="98" x2="410" y2="208" stroke="rgba(147,164,192,0.28)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- tema_id: temas -> proposicoes -->
+      <line x1="598" y1="60" x2="708" y2="60" stroke="rgba(229,181,103,0.3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- deputados -> despesas -->
+      <line x1="420" y1="280" x2="220" y2="388" stroke="rgba(111,207,151,0.28)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- deputados -> votos nominais -->
+      <line x1="602" y1="246" x2="720" y2="238" stroke="rgba(124,196,255,0.3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- votos -> votacoes -->
+      <line x1="828" y1="276" x2="822" y2="388" stroke="rgba(124,196,255,0.28)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <!-- votacoes -> proposicoes (vinculo, faint) -->
+      <line x1="815" y1="388" x2="815" y2="98" stroke="rgba(124,196,255,0.16)" stroke-width="1.5" stroke-dasharray="3 5"/>
+      <!-- N:N (destaque): proposicoes -> ponte -> deputados -->
+      <line x1="760" y1="98" x2="560" y2="392" stroke="rgba(59,224,201,0.3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="490" y1="388" x2="490" y2="282" stroke="rgba(59,224,201,0.45)" stroke-width="1.75" stroke-dasharray="5 4"/>
 
-      <!-- dim_deputados (centro) -->
-      <rect x="370" y="170" width="220" height="80" rx="12" fill="rgba(74,158,255,0.08)" stroke="rgba(74,158,255,0.4)" stroke-width="2"/>
-      <text x="480" y="202" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="18" font-style="italic" fill="#4a9eff">dim_deputados</text>
-      <text x="480" y="222" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">deputado_id · nome · partido</text>
-      <text x="480" y="237" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">uf · sexo · foto_url</text>
+      <!-- ===== dim_deputados (HUB, centro) ===== -->
+      <rect x="380" y="200" width="220" height="84" rx="12" fill="rgba(59,224,201,0.09)" stroke="rgba(59,224,201,0.45)" stroke-width="2"/>
+      <text x="490" y="234" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="18" font-weight="600" font-style="italic" fill="#3BE0C9">dim_deputados</text>
+      <text x="490" y="254" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">deputado_id · nome · partido</text>
+      <text x="490" y="269" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">uf · sexo · foto_url</text>
+      <text x="490" y="195" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="9" letter-spacing="1.5" fill="#3BE0C9">HUB</text>
 
-      <!-- dim_partidos (top-left) -->
-      <rect x="200" y="60" width="200" height="70" rx="10" fill="rgba(176,190,197,0.06)" stroke="rgba(176,190,197,0.3)" stroke-width="1.5"/>
-      <text x="300" y="90" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#b0bec5">dim_partidos</text>
-      <text x="300" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">partido_id · sigla · nome</text>
-      <text x="300" y="122" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">21 registros</text>
+      <!-- ===== dim_partidos (topo-esquerda) ===== -->
+      <rect x="60" y="30" width="240" height="68" rx="10" fill="rgba(147,164,192,0.06)" stroke="rgba(147,164,192,0.3)" stroke-width="1.5"/>
+      <text x="180" y="60" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#93A4C0">dim_partidos</text>
+      <text x="180" y="78" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">partido_id · sigla · nome</text>
+      <text x="180" y="92" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">21 registros</text>
 
-      <!-- dim_temas (top-center) -->
-      <rect x="380" y="10" width="200" height="70" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.3)" stroke-width="1.5"/>
-      <text x="480" y="40" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#d4af37">dim_temas</text>
-      <text x="480" y="58" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">tema_id · nome · descricao</text>
-      <text x="480" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">10 temas (Sprint 3)</text>
+      <!-- ===== dim_temas (topo-centro) ===== -->
+      <rect x="388" y="26" width="210" height="68" rx="10" fill="rgba(229,181,103,0.06)" stroke="rgba(229,181,103,0.3)" stroke-width="1.5"/>
+      <text x="493" y="56" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#E5B567">dim_temas</text>
+      <text x="493" y="74" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">tema_id · nome · critico</text>
+      <text x="493" y="88" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">10 temas</text>
 
-      <!-- fato_proposicoes (top-right) -->
-      <rect x="560" y="60" width="220" height="70" rx="10" fill="rgba(239,144,0,0.06)" stroke="rgba(239,144,0,0.3)" stroke-width="1.5"/>
-      <text x="670" y="90" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#ef9000">fato_proposicoes</text>
-      <text x="670" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">id · tipo · ementa · tema_id</text>
-      <text x="670" y="122" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">embedding (pgvector)</text>
+      <!-- ===== fato_proposicoes (topo-direita) ===== -->
+      <rect x="708" y="30" width="222" height="68" rx="10" fill="rgba(245,165,36,0.06)" stroke="rgba(245,165,36,0.3)" stroke-width="1.5"/>
+      <text x="819" y="60" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#F5A524">fato_proposicoes</text>
+      <text x="819" y="78" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">id · tipo · ementa · tema_id</text>
+      <text x="819" y="92" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">embedding · resumo (IA)</text>
 
-      <!-- fato_despesas (bottom-left) -->
-      <rect x="60" y="290" width="240" height="80" rx="10" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.3)" stroke-width="1.5"/>
-      <text x="180" y="320" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#3fb950">fato_despesas</text>
-      <text x="180" y="338" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">cod_documento · valor · tipo</text>
-      <text x="180" y="353" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">~187k registros (CEAP)</text>
+      <!-- ===== fato_votacao_votos (centro-direita, Pós V1) ===== -->
+      <rect x="720" y="202" width="222" height="74" rx="10" fill="rgba(124,196,255,0.10)" stroke="rgba(124,196,255,0.42)" stroke-width="1.5"/>
+      <text x="831" y="230" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="15" font-weight="600" fill="#7CC4FF">fato_votacao_votos</text>
+      <text x="831" y="248" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">votacao_id · deputado_id · voto</text>
+      <text x="831" y="263" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#7CC4FF">Pós V1 · voto nominal por deputado</text>
 
-      <!-- fato_votacoes (bottom-right) -->
-      <rect x="660" y="290" width="240" height="80" rx="10" fill="rgba(167,139,250,0.06)" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
-      <text x="780" y="320" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="17" font-style="italic" fill="#a78bfa">fato_votacoes</text>
-      <text x="780" y="338" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">votacao_id · resultado · data</text>
-      <text x="780" y="353" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#6e7a8c">100 votações carregadas</text>
+      <!-- ===== fato_despesas (rodapé-esquerda) ===== -->
+      <rect x="55" y="386" width="232" height="78" rx="10" fill="rgba(111,207,151,0.06)" stroke="rgba(111,207,151,0.3)" stroke-width="1.5"/>
+      <text x="171" y="416" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#6FCF97">fato_despesas</text>
+      <text x="171" y="434" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">cod_documento · valor · tipo</text>
+      <text x="171" y="448" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">~145k registros (CEAP)</text>
+
+      <!-- ===== ponte_proposicao_autores (rodapé-centro, Pós V1) ===== -->
+      <rect x="376" y="386" width="228" height="78" rx="10" fill="rgba(59,224,201,0.10)" stroke="rgba(59,224,201,0.45)" stroke-width="1.5"/>
+      <text x="490" y="414" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="14.5" font-weight="600" fill="#3BE0C9">ponte_proposicao_autores</text>
+      <text x="490" y="432" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">N:N · deputado_id · partido_id</text>
+      <text x="490" y="448" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#3BE0C9">Pós V1 · 519 autorias</text>
+
+      <!-- ===== fato_votacoes (rodapé-direita) ===== -->
+      <rect x="700" y="386" width="230" height="78" rx="10" fill="rgba(124,196,255,0.06)" stroke="rgba(124,196,255,0.3)" stroke-width="1.5"/>
+      <text x="815" y="416" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#7CC4FF">fato_votacoes</text>
+      <text x="815" y="434" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">votacao_id · resultado · data</text>
+      <text x="815" y="448" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#5C6E8C">100 votações carregadas</text>
     </svg>
   </div>
 
   <div class="reveal" style="margin-top:auto;padding-top:clamp(10px,1.5vh,18px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
     <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
-      <strong style="color:var(--text)">dim_deputados</strong> é o hub do esquema — conecta partidos, gastos CEAP, proposições e votações.
+      <strong style="color:var(--text)">8 tabelas</strong> — <strong style="color:var(--text)">dim_deputados</strong> é o hub; a ponte N:N resolve a autoria real (o <code style="font-family:var(--font-mono);color:var(--accent)">/proposicoes</code> não traz o autor).
     </p>
     <div style="display:flex;gap:0.5rem;flex-shrink:0">
       <span class="tag tag-orange">Star Schema</span>
-      <span class="tag tag-gold">pgvector (Sprint 3)</span>
+      <span class="tag tag-cyan">Ponte N:N (Pós V1)</span>
       <span class="tag tag-silver">Supabase</span>
     </div>
   </div>
@@ -618,7 +650,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 8 — UPSERT IDEMPOTENTE                                      -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 70%,rgba(63,185,80,0.04) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 20% 70%,rgba(111,207,151,0.04) 0%,transparent 50%)">
   <p class="slide__label reveal">SPRINT 2 &middot; CARGA</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     Upsert <span style="color:var(--green)">idempotente</span> — execute quantas vezes quiser
@@ -627,7 +659,7 @@
   <div class="reveal" style="flex:1;display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(16px,2.5vw,32px);align-items:start;margin-top:clamp(12px,2vh,20px)">
     <div class="terminal">
       <div class="terminal__bar">
-        <span class="terminal__dot" style="background:#f85149"></span>
+        <span class="terminal__dot" style="background:#FF5C6C"></span>
         <span class="terminal__dot" style="background:#febc2e"></span>
         <span class="terminal__dot" style="background:#28c840"></span>
         <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);margin-left:8px">src/load/upsert.py</span>
@@ -652,15 +684,15 @@
     </div>
 
     <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,16px)">
-      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.25);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-green 4s ease-in-out infinite">
+      <div style="background:var(--surface);border:1px solid rgba(111,207,151,0.25);border-radius:14px;padding:clamp(14px,2vh,20px);animation:pulse-green 4s ease-in-out infinite">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">CHAVES NATURAIS</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">fato_despesas: <code style="font-family:var(--font-mono);color:var(--text)">(cod_documento, parcela)</code> &mdash; PK natural da CEAP, nunca duplica.</p>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(59,224,201,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">ATUALIZAÇÃO SELETIVA</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">Apenas campos não-PK são atualizados. Permite reprocessamento sem perda de enriquecimento IA.</p>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(229,181,103,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">BATCH OTIMIZADO</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">DataFrame inteiro em uma transação. PostgreSQL processa em batch, não linha por linha.</p>
       </div>
@@ -681,7 +713,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 9 — DIVIDER SPRINT 3                                        -->
 <!-- ================================================================ -->
-<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(212,175,55,0.06) 0%,transparent 50%)">
+<section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 50% 50%,rgba(229,181,103,0.06) 0%,transparent 50%)">
   <div class="slide__number" style="background:linear-gradient(135deg,var(--gold) 0%,var(--silver) 50%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">03</div>
   <p class="slide__label reveal" style="position:relative;z-index:1">SPRINT 3 &middot; ENRIQUECIMENTO IA</p>
   <h2 class="slide__heading reveal" style="font-style:italic;position:relative;z-index:1">
@@ -695,7 +727,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 10 — EMBEDDINGS + PGVECTOR                                  -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 80% 20%,rgba(212,175,55,0.05) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 80% 20%,rgba(229,181,103,0.05) 0%,transparent 50%)">
   <p class="slide__label reveal">SPRINT 3 &middot; EMBEDDINGS</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     Busca <span style="color:var(--gold)">semântica</span> em proposições
@@ -705,46 +737,46 @@
   <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
     <svg viewBox="0 0 960 160" width="100%" style="overflow:visible">
       <!-- Proposição text box -->
-      <rect x="10" y="45" width="200" height="70" rx="10" fill="rgba(212,175,55,0.06)" stroke="rgba(212,175,55,0.3)" stroke-width="1.5"/>
-      <text x="110" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">Ementa da</text>
-      <text x="110" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#d4af37">Proposição</text>
-      <text x="110" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">texto livre</text>
+      <rect x="10" y="45" width="200" height="70" rx="10" fill="rgba(229,181,103,0.06)" stroke="rgba(229,181,103,0.3)" stroke-width="1.5"/>
+      <text x="110" y="72" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#E5B567">Ementa da</text>
+      <text x="110" y="88" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#E5B567">Proposição</text>
+      <text x="110" y="108" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">texto livre</text>
       <!-- Arrow -->
-      <line x1="212" y1="80" x2="272" y2="80" stroke="#d4af37" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-gold)"/>
+      <line x1="212" y1="80" x2="272" y2="80" stroke="#E5B567" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-gold)"/>
       <!-- OpenAI box -->
-      <rect x="276" y="45" width="200" height="70" rx="10" fill="rgba(74,158,255,0.06)" stroke="rgba(74,158,255,0.3)" stroke-width="1.5"/>
-      <text x="376" y="72" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#4a9eff">text-embedding-</text>
-      <text x="376" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#4a9eff">ada-002</text>
-      <text x="376" y="108" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">OpenAI API</text>
+      <rect x="276" y="45" width="200" height="70" rx="10" fill="rgba(59,224,201,0.06)" stroke="rgba(59,224,201,0.3)" stroke-width="1.5"/>
+      <text x="376" y="72" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#3BE0C9">text-embedding-</text>
+      <text x="376" y="88" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#3BE0C9">3-small</text>
+      <text x="376" y="108" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">OpenAI API</text>
       <!-- Arrow -->
-      <line x1="478" y1="80" x2="538" y2="80" stroke="#4a9eff" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-blue)"/>
+      <line x1="478" y1="80" x2="538" y2="80" stroke="#3BE0C9" stroke-width="2" stroke-dasharray="5 4" class="flow-line" marker-end="url(#ah-blue)"/>
       <!-- Vector box -->
-      <rect x="542" y="30" width="200" height="100" rx="10" fill="rgba(167,139,250,0.06)" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
-      <text x="642" y="70" text-anchor="middle" font-family="'Fira Code',monospace" font-size="12" fill="#a78bfa">vector(1536)</text>
-      <text x="642" y="88" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">[0.021, -0.453,</text>
-      <text x="642" y="103" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">0.187, ..., 0.062]</text>
-      <text x="642" y="120" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">1.536 dimensões</text>
+      <rect x="542" y="30" width="200" height="100" rx="10" fill="rgba(124,196,255,0.06)" stroke="rgba(124,196,255,0.3)" stroke-width="1.5"/>
+      <text x="642" y="70" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="12" fill="#7CC4FF">vector(1536)</text>
+      <text x="642" y="88" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">[0.021, -0.453,</text>
+      <text x="642" y="103" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">0.187, ..., 0.062]</text>
+      <text x="642" y="120" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">1.536 dimensões</text>
       <!-- Arrow -->
-      <line x1="744" y1="80" x2="804" y2="80" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 4" class="flow-line"/>
+      <line x1="744" y1="80" x2="804" y2="80" stroke="#7CC4FF" stroke-width="2" stroke-dasharray="5 4" class="flow-line"/>
       <!-- pgvector box -->
-      <rect x="808" y="45" width="142" height="70" rx="10" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.3)" stroke-width="1.5"/>
-      <text x="879" y="72" text-anchor="middle" font-family="'Instrument Serif',serif" font-size="16" font-style="italic" fill="#3fb950">pgvector</text>
-      <text x="879" y="90" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">PostgreSQL</text>
-      <text x="879" y="105" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">cosine similarity</text>
+      <rect x="808" y="45" width="142" height="70" rx="10" fill="rgba(111,207,151,0.06)" stroke="rgba(111,207,151,0.3)" stroke-width="1.5"/>
+      <text x="879" y="72" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="16" font-style="italic" fill="#6FCF97">pgvector</text>
+      <text x="879" y="90" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">PostgreSQL</text>
+      <text x="879" y="105" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">cosine similarity</text>
     </svg>
   </div>
 
   <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
     <div class="stats-row cols-3">
-      <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+      <div class="stat-card" style="border-color:rgba(229,181,103,0.2)">
         <div class="stat-val" style="color:var(--gold)">1.536</div>
         <div class="stat-lbl">dimensões por vetor</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(74,158,255,0.2)">
-        <div class="stat-val" style="color:var(--accent)">100</div>
+      <div class="stat-card" style="border-color:rgba(59,224,201,0.2)">
+        <div class="stat-val" style="color:var(--accent)">1.550</div>
         <div class="stat-lbl">proposições com embedding</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(63,185,80,0.2)">
+      <div class="stat-card" style="border-color:rgba(111,207,151,0.2)">
         <div class="stat-val" style="color:var(--green)">&lt;=&gt;</div>
         <div class="stat-lbl">operador cosine (pgvector)</div>
       </div>
@@ -756,7 +788,7 @@
       "Quais proposições falam sobre educação básica?" &mdash; busca semântica encontra mesmo sem as palavras exatas.
     </p>
     <div style="display:flex;gap:0.5rem;flex-shrink:0">
-      <span class="tag tag-gold">text-embedding-ada-002</span>
+      <span class="tag tag-gold">text-embedding-3-small</span>
       <span class="tag tag-green">pgvector extension</span>
     </div>
   </div>
@@ -765,7 +797,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 11 — CLASSIFICAÇÃO TEMÁTICA + RESUMO IA                     -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(212,175,55,0.04) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 30% 20%,rgba(229,181,103,0.04) 0%,transparent 50%)">
   <p class="slide__label reveal">SPRINT 3 &middot; IA GENERATIVA</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     <span style="color:var(--gold)">GPT-4o-mini</span> classifica e resume
@@ -775,7 +807,7 @@
 
     <!-- LEFT: Classificação Temática -->
     <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
-      <div style="background:var(--surface);border:1px solid rgba(212,175,55,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(229,181,103,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:10px">CLASSIFICAÇÃO TEMÁTICA</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-bottom:12px">GPT-4o-mini escolhe 1 dos 10 temas pré-definidos para cada proposição:</p>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
@@ -791,7 +823,7 @@
           <span class="tag tag-silver">Outros</span>
         </div>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(74,158,255,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(59,224,201,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--accent);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">PROMPT ESTRUTURADO</p>
         <div style="font-family:var(--font-mono);font-size:clamp(0.7rem,0.9vw,0.8rem);color:var(--code-text);line-height:1.6;background:var(--code-bg);border-radius:8px;padding:10px">
           <span style="color:var(--text-dim)">"""</span><br>
@@ -807,7 +839,7 @@
 
     <!-- RIGHT: Resumo Executivo -->
     <div style="display:flex;flex-direction:column;gap:clamp(10px,1.5vh,14px)">
-      <div style="background:var(--surface);border:1px solid rgba(63,185,80,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(111,207,151,0.2);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--green);font-weight:700;letter-spacing:0.1em;margin-bottom:8px">RESUMO EXECUTIVO</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim);margin-bottom:10px">Prompt versionado em <code style="font-family:var(--font-mono);color:var(--text)">ai/prompts/resumo_executivo.md</code>. Saída estruturada em Markdown:</p>
         <div style="font-family:var(--font-mono);font-size:clamp(0.68rem,0.88vw,0.78rem);color:var(--code-text);line-height:1.7;background:var(--code-bg);border-radius:8px;padding:10px">
@@ -820,7 +852,7 @@
           &nbsp;da rede pública federal.
         </div>
       </div>
-      <div style="background:var(--surface);border:1px solid rgba(176,190,197,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
+      <div style="background:var(--surface);border:1px solid rgba(147,164,192,0.15);border-radius:14px;padding:clamp(14px,2vh,20px)">
         <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--silver);font-weight:700;letter-spacing:0.1em;margin-bottom:6px">CUSTO CONTROLADO</p>
         <p style="font-family:var(--font-editorial);font-size:clamp(0.85rem,1.2vw,1rem);font-style:italic;color:var(--text-dim)">GPT-4o-mini: ~$0.001/proposição. Hard cap configurado. Log de custos em <code style="font-family:var(--font-mono);color:var(--text)">docs/custo_ia.csv</code>.</p>
       </div>
@@ -829,7 +861,7 @@
 
   <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
     <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
-      <code style="font-family:var(--font-mono);color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px">run_ai_enrichment.py --limite 100</code> &mdash; incremental, seguro para reexecutar.
+      <code style="font-family:var(--font-mono);color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px">3_run_ai_enrichment.py --limite 100</code> &mdash; incremental, seguro para reexecutar.
     </p>
     <div style="display:flex;gap:0.5rem;flex-shrink:0">
       <span class="tag tag-gold">GPT-4o-mini</span>
@@ -839,9 +871,58 @@
 </section>
 
 <!-- ================================================================ -->
+<!-- SLIDE 11.5 — PÓS V1: AUTORIA, VOTOS E DESPESAS                    -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(59,224,201,0.05) 0%,transparent 50%)">
+  <p class="slide__label reveal" style="color:var(--accent)">PÓS V1 &middot; EVOLUÇÃO</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Três pontes que <span style="color:var(--accent)">completam o modelo</span>
+  </h2>
+
+  <div class="reveal" style="flex:1;margin-top:clamp(14px,2.5vh,24px)">
+    <div class="tier-row" style="margin-top:0">
+      <div class="tier-card" style="border-color:rgba(59,224,201,0.25);animation:pulse-glow 4s ease-in-out infinite">
+        <h4 style="color:var(--accent)">Autoria N:N</h4>
+        <div class="tier-sub" style="color:var(--accent)">ponte_proposicao_autores</div>
+        <p>O <code style="font-family:var(--font-mono);color:var(--accent)">/proposicoes</code> não traz o autor. A ponte é populada por <code style="font-family:var(--font-mono);color:var(--text)">/proposicoes/{id}/autores</code> &mdash; deputado, partido ou órgão, com ordem de assinatura e proponente.</p>
+        <div style="margin-top:auto;padding-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-accent">4_run_authors_bridge.py</span>
+        </div>
+      </div>
+      <div class="tier-card" style="border-color:rgba(124,196,255,0.25)">
+        <h4 style="color:var(--blue)">Votos nominais</h4>
+        <div class="tier-sub" style="color:var(--blue)">fato_votacao_votos</div>
+        <p>Vínculo votação→proposição e o voto de cada deputado via <code style="font-family:var(--font-mono);color:var(--text)">/votacoes/{id}/votos</code>. Habilita o "como cada partido votou" e o cruzamento tema × partido.</p>
+        <div style="margin-top:auto;padding-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-blue">5_run_votes_bridge.py</span>
+        </div>
+      </div>
+      <div class="tier-card" style="border-color:rgba(111,207,151,0.25)">
+        <h4 style="color:var(--green)">Despesas isoladas</h4>
+        <div class="tier-sub" style="color:var(--green)">pipeline próprio</div>
+        <p>A CEAP (~145k linhas, ~500 chamadas HTTP) saiu do ciclo principal para um pipeline próprio, rodado por último &mdash; não trava proposições, votações nem IA.</p>
+        <div style="margin-top:auto;padding-top:12px;display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-green">6_run_despesas.py</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Bridges <strong style="color:var(--text)">idempotentes</strong> com flag <code style="font-family:var(--font-mono);color:var(--accent);background:var(--accent-dim);padding:2px 6px;border-radius:4px">--only-missing</code> &mdash; processam só o que ainda falta; divergências vão para <code style="font-family:var(--font-mono);color:var(--text)">pipeline_erros</code>.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">Scripts 4 → 5 → 6</span>
+      <span class="tag tag-silver">sql/migration_autoria_votos.sql</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
 <!-- SLIDE 12 — STACK TECNOLÓGICO                                      -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 80%,rgba(74,158,255,0.04) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 80%,rgba(59,224,201,0.04) 0%,transparent 50%)">
   <p class="slide__label reveal">STACK &middot; TECNOLOGIAS</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     Cada ferramenta <span style="color:var(--accent)">no lugar certo</span>
@@ -849,47 +930,47 @@
 
   <div class="reveal" style="flex:1">
     <div class="tier-row cols-4" style="margin-top:clamp(14px,2.5vh,24px)">
-      <div class="tier-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
+      <div class="tier-card" style="border-color:rgba(59,224,201,0.2);animation:pulse-glow 4s ease-in-out infinite">
         <h4 style="color:var(--accent)">Python 3.14</h4>
         <div class="tier-sub" style="color:var(--accent)">Linguagem</div>
         <p>Type hints obrigatórios, f-strings, dataclasses. Venv isolado. UTF-8 em todos os arquivos.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(176,190,197,0.2)">
+      <div class="tier-card" style="border-color:rgba(147,164,192,0.2)">
         <h4 style="color:var(--silver)">Pandas</h4>
         <div class="tier-sub" style="color:var(--silver)">Transformação</div>
         <p>Normalização de JSON aninhado, limpeza de strings, type casting. DataFrame → PostgreSQL.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(63,185,80,0.2)">
+      <div class="tier-card" style="border-color:rgba(111,207,151,0.2)">
         <h4 style="color:var(--green)">SQLAlchemy</h4>
         <div class="tier-sub" style="color:var(--green)">ORM + Carga</div>
         <p>Core (não ORM) para upsert via dialeto PostgreSQL. Transações atômicas batch.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(239,144,0,0.2)">
+      <div class="tier-card" style="border-color:rgba(245,165,36,0.2)">
         <h4 style="color:var(--orange)">Supabase</h4>
         <div class="tier-sub" style="color:var(--orange)">PostgreSQL Cloud</div>
         <p>Free tier para dev. pgvector extension habilitada. Connection string via DATABASE_URL.</p>
       </div>
     </div>
     <div class="tier-row cols-4" style="margin-top:clamp(8px,1.5vh,14px)">
-      <div class="tier-card" style="border-color:rgba(212,175,55,0.2)">
+      <div class="tier-card" style="border-color:rgba(229,181,103,0.2)">
         <h4 style="color:var(--gold)">OpenAI SDK</h4>
         <div class="tier-sub" style="color:var(--gold)">IA Generativa</div>
-        <p>GPT-4o-mini para classificação e resumo. Ada-002 para embeddings. Hard cap configurado.</p>
+        <p>GPT-4o-mini para classificação e resumo. text-embedding-3-small para embeddings. Hard cap configurado.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(167,139,250,0.2)">
+      <div class="tier-card" style="border-color:rgba(124,196,255,0.2)">
         <h4 style="color:var(--purple)">pgvector</h4>
         <div class="tier-sub" style="color:var(--purple)">Busca Semântica</div>
         <p>Extension PostgreSQL. Vetores 1536-d. Operador &lt;=&gt; para similaridade cosseno.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(34,211,238,0.2)">
+      <div class="tier-card" style="border-color:rgba(59,224,201,0.2)">
         <h4 style="color:var(--cyan)">python-dotenv</h4>
         <div class="tier-sub" style="color:var(--cyan)">Configuração</div>
         <p>Todos os segredos via .env. DATABASE_URL, OPENAI_API_KEY, variáveis de configuração.</p>
       </div>
-      <div class="tier-card" style="border-color:rgba(96,165,250,0.2)">
-        <h4 style="color:var(--blue)">logging</h4>
-        <div class="tier-sub" style="color:var(--blue)">Observabilidade</div>
-        <p>log.info/warning/error em todas as camadas. Zero print(). LOG_LEVEL configurável.</p>
+      <div class="tier-card" style="border-color:rgba(124,196,255,0.2)">
+        <h4 style="color:var(--blue)">Next.js · n8n</h4>
+        <div class="tier-sub" style="color:var(--blue)">Dashboard &amp; Orquestração</div>
+        <p>Painel Next.js 16 lê o Supabase ao vivo. n8n envia o e-mail semanal com o Top 5 da semana para a equipe.</p>
       </div>
     </div>
   </div>
@@ -903,7 +984,7 @@
 <!-- ================================================================ -->
 <!-- SLIDE 13 — RESULTADOS TÉCNICOS                                    -->
 <!-- ================================================================ -->
-<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(74,158,255,0.06) 0%,transparent 50%)">
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 50% 20%,rgba(59,224,201,0.06) 0%,transparent 50%)">
   <p class="slide__label reveal">RESULTADOS &middot; NÚMEROS</p>
   <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
     O que foi <span style="color:var(--accent)">carregado</span>
@@ -911,31 +992,31 @@
 
   <div class="reveal" style="margin-top:clamp(16px,3vh,28px)">
     <div class="stats-row cols-3">
-      <div class="stat-card" style="border-color:rgba(176,190,197,0.2)">
+      <div class="stat-card" style="border-color:rgba(147,164,192,0.2)">
         <div class="stat-val" style="color:var(--silver)">21</div>
         <div class="stat-lbl">partidos políticos</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(74,158,255,0.2);animation:pulse-glow 4s ease-in-out infinite">
-        <div class="stat-val" style="color:var(--accent)">513</div>
+      <div class="stat-card" style="border-color:rgba(59,224,201,0.2);animation:pulse-glow 4s ease-in-out infinite">
+        <div class="stat-val" style="color:var(--accent)">523</div>
         <div class="stat-lbl">deputados federais</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(239,144,0,0.2)">
-        <div class="stat-val" style="color:var(--orange)">100</div>
-        <div class="stat-lbl">proposições carregadas</div>
+      <div class="stat-card" style="border-color:rgba(245,165,36,0.2)">
+        <div class="stat-val" style="color:var(--orange)">1.550</div>
+        <div class="stat-lbl">proposições com IA</div>
       </div>
     </div>
     <div class="stats-row cols-3" style="margin-top:clamp(8px,1.5vh,14px)">
-      <div class="stat-card" style="border-color:rgba(212,175,55,0.2)">
+      <div class="stat-card" style="border-color:rgba(229,181,103,0.2)">
         <div class="stat-val" style="color:var(--gold)">100</div>
         <div class="stat-lbl">votações carregadas</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(63,185,80,0.2)">
-        <div class="stat-val" style="color:var(--green)">187k</div>
+      <div class="stat-card" style="border-color:rgba(111,207,151,0.2)">
+        <div class="stat-val" style="color:var(--green)">~145k</div>
         <div class="stat-lbl">despesas CEAP</div>
       </div>
-      <div class="stat-card" style="border-color:rgba(167,139,250,0.2)">
-        <div class="stat-val" style="color:var(--purple)">3</div>
-        <div class="stat-lbl">sprints entregues</div>
+      <div class="stat-card" style="border-color:rgba(124,196,255,0.2)">
+        <div class="stat-val" style="color:var(--blue)">8</div>
+        <div class="stat-lbl">tabelas no modelo</div>
       </div>
     </div>
   </div>
@@ -943,19 +1024,19 @@
   <!-- Linha do tempo dos sprints -->
   <div class="reveal" style="margin-top:clamp(14px,2.5vh,24px)">
     <svg viewBox="0 0 900 80" width="100%" height="80">
-      <line x1="50" y1="40" x2="850" y2="40" stroke="rgba(120,160,220,0.15)" stroke-width="2"/>
+      <line x1="50" y1="40" x2="850" y2="40" stroke="rgba(148,163,184,0.15)" stroke-width="2"/>
       <!-- Sprint 1 -->
       <circle cx="200" cy="40" r="10" fill="var(--accent)" filter="url(#glow)"/>
-      <text x="200" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#4a9eff">Sprint 1</text>
-      <text x="200" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">API Client</text>
+      <text x="200" y="20" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#3BE0C9">Sprint 1</text>
+      <text x="200" y="65" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">API Client</text>
       <!-- Sprint 2 -->
       <circle cx="500" cy="40" r="10" fill="var(--orange)" filter="url(#glow)"/>
-      <text x="500" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#ef9000">Sprint 2</text>
-      <text x="500" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">ETL + Star Schema</text>
+      <text x="500" y="20" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#F5A524">Sprint 2</text>
+      <text x="500" y="65" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">ETL + Star Schema</text>
       <!-- Sprint 3 -->
       <circle cx="800" cy="40" r="10" fill="var(--gold)" filter="url(#glow)"/>
-      <text x="800" y="20" text-anchor="middle" font-family="'Fira Code',monospace" font-size="11" fill="#d4af37">Sprint 3</text>
-      <text x="800" y="65" text-anchor="middle" font-family="'Fira Code',monospace" font-size="10" fill="#6e7a8c">IA Generativa</text>
+      <text x="800" y="20" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="11" fill="#E5B567">Sprint 3</text>
+      <text x="800" y="65" text-anchor="middle" font-family="'IBM Plex Mono',monospace" font-size="10" fill="#5C6E8C">IA Generativa</text>
       <!-- Lines between -->
       <line x1="210" y1="40" x2="488" y2="40" stroke="url(#flow-grad-1)" stroke-width="2" stroke-dasharray="6 4" class="flow-line"/>
       <line x1="512" y1="40" x2="788" y2="40" stroke="url(#flow-grad-2)" stroke-width="2" stroke-dasharray="6 4" class="flow-line"/>
@@ -974,9 +1055,43 @@
 </section>
 
 <!-- ================================================================ -->
+<!-- SLIDE 13.5 — DASHBOARD AO VIVO (placeholder de print)            -->
+<!-- ================================================================ -->
+<section class="slide" style="justify-content:flex-start;padding-top:clamp(28px,4vh,48px);background-image:radial-gradient(ellipse at 78% 10%,rgba(59,224,201,0.06) 0%,transparent 55%)">
+  <p class="slide__label reveal" style="color:var(--accent)">ENTREGA &middot; DASHBOARD</p>
+  <h2 class="slide__heading reveal" style="font-style:italic;font-size:clamp(28px,5vw,52px)">
+    Painel <span style="color:var(--accent)">Bússola Legislativa</span> — leitura ao vivo
+  </h2>
+  <p class="reveal" style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.4vw,1.1rem);font-style:italic;color:var(--text-dim);margin-top:clamp(6px,1vh,12px)">
+    Next.js 16 + Supabase. 9 seções, views agregadas, auto-refresh a cada 60s.
+  </p>
+
+  <!-- Placeholder para print do dashboard -->
+  <div class="reveal" style="flex:1;display:flex;margin-top:clamp(14px,2.5vh,22px)">
+    <div style="flex:1;border:2px dashed var(--border-bright);border-radius:18px;background:linear-gradient(180deg,var(--surface),var(--surface2));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:0">
+      <div style="font-size:clamp(2rem,4vw,3rem);opacity:0.7">🖥️</div>
+      <p style="font-family:var(--font-mono);font-size:clamp(0.8rem,1.2vw,0.95rem);color:var(--text-dim);letter-spacing:0.04em;text-align:center;padding:0 16px">
+        [ inserir print do dashboard — Visão Geral / Radar Temático ]
+      </p>
+      <span style="font-family:var(--font-mono);font-size:0.68rem;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase">localhost:3000 · tempo real</span>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-top:auto;padding-top:clamp(12px,2vh,20px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:clamp(16px,3vw,32px)">
+    <p style="font-family:var(--font-editorial);font-size:clamp(0.9rem,1.5vw,1.1rem);font-style:italic;color:var(--text-dim);flex:1">
+      Heatmap tema × partido, autoria por deputado, "como cada partido votou" &mdash; todos alimentados pelas pontes do Pós V1.
+    </p>
+    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+      <span class="tag tag-accent">Next.js 16</span>
+      <span class="tag tag-blue">Recharts · SWR</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================ -->
 <!-- SLIDE 14 — CLOSING QUOTE                                          -->
 <!-- ================================================================ -->
-<section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 30%,rgba(74,158,255,0.06) 0%,transparent 60%)">
+<section class="slide slide--quote" style="background-image:radial-gradient(ellipse at 50% 30%,rgba(59,224,201,0.06) 0%,transparent 60%)">
   <div class="slide__quote-mark reveal">&ldquo;</div>
   <blockquote class="reveal" style="color:var(--text)">
     Transparência não é<br><span class="gradient-text">o fim &mdash; é o começo.</span>
@@ -989,6 +1104,14 @@
     <span class="tag tag-accent">github.com/bussola-publica</span>
     <span class="tag tag-silver">Supabase ao vivo</span>
     <span class="tag tag-gold">Próxima: p2-resultados</span>
+  </div>
+
+  <!-- Assinatura de entrega — logo Xperiun sutil -->
+  <div class="reveal" style="position:absolute;bottom:clamp(20px,4vh,40px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;opacity:0.5">
+    <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim)">Entregue para</span>
+    <svg viewBox="0 0 756 192.57" width="84" height="auto" aria-label="Xperiun">
+      <path d="M58.44 23.24C47.68 34 52.04 55.8 68.18 71.94l9.74 9.74c9.13 9.13 19.93 13.65 26.27 11.52L87.65 71.94l21.26 16.54c2.13-6.35-2.39-17.15-11.52-26.27L58.44 23.24zm50.49 80.91c2.08 6.36-2.44 17.12-11.54 26.22l-29.22 29.21C41.28 186.48 10.76 199.56 0 188.8l77.91-77.91c9.1-9.1 19.87-13.62 26.22-11.54l-35.96 40.76 40.76-35.96zm17.68 26.22c-9.13-9.13-13.65-19.93-11.52-26.27l21.26 16.54-16.54-21.26c6.35-2.13 17.15 2.39 26.27 11.52l9.74 9.74c16.14 16.14 20.5 37.94 9.74 48.69l-38.95-38.96zm-11.54-41.95c-2.08-6.36 2.44-17.12 11.54-26.22l29.22-29.21C182.72 6.09 213.24-6.99 224 3.77l-77.91 77.91c-9.1 9.1-19.87 13.62-26.22 11.54l35.96-40.76-40.76 35.96zM644 124.28c-17.65 0-32-14.35-32-32v-24h8v24c0 13.23 10.77 24 24 24s24-10.77 24-24v-24h8v24c0 17.65-14.35 32-32 32zm-328 0h-8v-52c0-2.21 1.79-4 4-4h47.62c10.92 0 20.11 8.6 20.37 19.52.27 11.25-8.81 20.48-19.99 20.48h-44v16zm0-24h44c6.62 0 12-5.38 12-12s-5.38-12-12-12h-44v24zm272 24h-8v-56h8v56zm112 0h-8v-52c0-2.21 1.79-4 4-4h4.52c1.06 0 2.08.42 2.83 1.17L748 114.11V68.28h8v52c0 2.21-1.79 4-4 4h-3.48c-1.06 0-2.08-.42-2.83-1.17L700 77.42v46.86zm-438.14-28 30.14 28h-11.71L256 101.72l-24.29 22.56H220l30.14-28-30.14-28h11.71L256 90.85l24.29-22.56H292l-30.14 27.99zm142.14-8v4h56v8h-56v4c0 6.62 5.38 12 12 12h44v8h-44c-11.03 0-20-8.97-20-20v-16c0-11.03 8.97-20 20-20h44v8h-44c-6.62 0-12 5.39-12 12zm139.64 36H556l-19.65-16.01c11.03-.19 19.91-9.34 19.64-20.47-.26-10.92-9.45-19.52-20.37-19.52H488c-2.21 0-4 1.79-4 4v52h8v-16h32l19.64 16zm-51.64-48h44c6.62 0 12 5.38 12 12s-5.38 12-12 12h-44v-24z" style="fill:#93A4C0"/>
+    </svg>
   </div>
 </section>
 

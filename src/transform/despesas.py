@@ -65,7 +65,7 @@ def transform_despesas(raw_dir: Path = DATA_RAW_DIR) -> pd.DataFrame:
     """
     despesas_dir = raw_dir / "deputados_despesas"
     if not despesas_dir.exists():
-        log.warning("Sem dados de despesas em %s — pulando (rode com --incluir-despesas).", despesas_dir)
+        log.warning("Sem dados de despesas em %s — pulando (rode: python scripts/6_run_despesas.py).", despesas_dir)
         return pd.DataFrame()
 
     files = sorted(despesas_dir.glob("*.json"))
