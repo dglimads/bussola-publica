@@ -1,3 +1,11 @@
 data,etapa,modelo,tokens_in,tokens_out,custo_usd,registros_processados,observacao
 2026-05-17,embed_pending,5868,0.000117,text-embedding-3-small
 2026-05-17,summarize_pending,19700,0.004624,gpt-4o-mini
+2026-06-12,embed_pending,11119,0.000222,text-embedding-3-small
+2026-06-12,summarize_pending,37821,0.009229,gpt-4o-mini
+2026-06-13,embed_pending,13907,0.000278,text-embedding-3-small
+2026-06-13,summarize_pending,35705,0.008713,gpt-4o-mini
+2026-06-14,embed_pending,13603,0.000272,text-embedding-3-small
+2026-06-14,summarize_pending,35671,0.008560,gpt-4o-mini
+2026-06-14,embed_pending,38535,0.000771,text-embedding-3-small
+2026-06-14,summarize_pending,171627,0.041087,gpt-4o-mini

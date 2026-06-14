@@ -1,9 +1,9 @@
 # Spec: Extracao — Bussola Publica
 
 **Status:** active
-**Versao:** 1.3
-**Ultima atualizacao:** 2026-05-17
-**Implementacao:** `src/extract/camara_api.py`, `scripts/run_extraction.py`
+**Versao:** 1.4
+**Ultima atualizacao:** 2026-06-14
+**Implementacao:** `src/extract/camara_api.py`, `scripts/1_run_extraction.py`, `src/bridge/`
 **Agent detalhado:** `docs/AGENT_INGESTOR.md`
 
 ---
@@ -54,6 +54,18 @@ Nada e transformado, validado ou carregado nesta etapa.
 |----------|-------------|--------|
 | `GET /deputados/{id}` | Campos detalhados (nomeCivil, gabinete, foto) | `save_one()` |
 | `GET /proposicoes/{id}` | Situacao atual, despacho | `save_one()` |
+
+### Autoria e votos (bridges pos-V1)
+
+| Endpoint | Quando usar | Metodo |
+|----------|-------------|--------|
+| `GET /proposicoes/{id}/autores` | Popular a ponte N:N de autoria | `fetch_proposicao_autores(id)` |
+| `GET /votacoes/{id}` | Resolver vinculo votacao->proposicao | `fetch_votacao_detalhe(id)` |
+| `GET /votacoes/{id}/votos` | Votos nominais por deputado | `fetch_votacao_votos(id)` |
+
+Consumidos por `scripts/4_run_authors_bridge.py` e `scripts/5_run_votes_bridge.py`
+(orquestracao em `src/bridge/autores.py` e `src/bridge/votos.py`). Persistem raw em
+`proposicoes_autores/` e `votacoes_votos/` antes de transformar.
 
 ---
 
@@ -126,7 +138,8 @@ data/raw/
 ├── votacoes/                     # GET /votacoes (listagem)
 ├── deputados_despesas/           # GET /deputados/{id}/despesas (por deputado)
 ├── votacoes_orientacoes/         # GET /votacoes/{id}/orientacoes (roadmap)
-└── votacoes_votos/               # GET /votacoes/{id}/votos (roadmap)
+├── votacoes_votos/               # GET /votacoes/{id}/votos (bridge de votos)
+└── proposicoes_autores/          # GET /proposicoes/{id}/autores (bridge de autoria)
 ```
 
 ---
@@ -183,6 +196,7 @@ data/raw/
 
 ## Changelog
 
+- 1.4 (2026-06-14): Endpoints de autoria (/proposicoes/{id}/autores), detalhe e votos (/votacoes/{id}, /votos) promovidos a implementados via bridges (src/bridge/); diretorios proposicoes_autores/ e votacoes_votos/ ativos
 - 1.3 (2026-05-17): Revisao completa; alinhado com Sprint 2 concluido; armadilhas de defaults documentadas
 - 1.2 (2026-05-15): Sub-recursos adicionados (despesas, profissoes, ocupacoes)
 - 1.0 (2026-05-15): Versao inicial

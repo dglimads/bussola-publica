@@ -73,13 +73,13 @@ def _log_cost(tokens_in: int, tokens_out: int) -> None:
     log.info("Custo estimado: US$ %.5f (%d in + %d out tokens)", cost, tokens_in, tokens_out)
 
 
-def summarize_pending(engine: Engine, limite: int = 100) -> int:
+def summarize_pending(engine: Engine, limite: int | None = None) -> int:
     """
     Gera resumo executivo para proposicoes sem resumo_executivo.
 
     Args:
         engine: SQLAlchemy engine conectado ao PostgreSQL.
-        limite: Maximo de proposicoes a processar nesta execucao.
+        limite: Maximo de proposicoes a processar nesta execucao. None = sem limite.
 
     Returns:
         Numero de proposicoes resumidas.
@@ -88,16 +88,19 @@ def summarize_pending(engine: Engine, limite: int = 100) -> int:
     model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
     system_prompt, user_template = _load_prompt()
 
+    sql = """
+        SELECT proposicao_id, tipo, ementa
+        FROM fato_proposicoes
+        WHERE resumo_executivo IS NULL AND ementa != ''
+        ORDER BY data_apresentacao DESC NULLS LAST
+    """
+    params: dict = {}
+    if limite is not None:
+        sql += " LIMIT :limite"
+        params["limite"] = limite
+
     with engine.connect() as conn:
-        rows = conn.execute(text(
-            """
-            SELECT proposicao_id, tipo, ementa
-            FROM fato_proposicoes
-            WHERE resumo_executivo IS NULL AND ementa != ''
-            ORDER BY data_apresentacao DESC NULLS LAST
-            LIMIT :limite
-            """
-        ), {"limite": limite}).fetchall()
+        rows = conn.execute(text(sql), params).fetchall()
 
     if not rows:
         log.info("Nenhuma proposicao pendente de resumo.")

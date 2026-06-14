@@ -60,7 +60,7 @@ ON CONFLICT (proposicao_id) DO UPDATE SET
 ## Ordem de Carga (FK)
 
 ```python
-# run_pipeline.py — ordem obrigatoria
+# 2_run_pipeline.py — ordem obrigatoria
 upsert_partidos(df_partidos, engine)      # 1. dim sem FK
 upsert_deputados(df_deputados, engine)    # 2. FK: partido_id
 upsert_proposicoes(df_props, engine)      # 3. FK: autor_id -> deputado_id

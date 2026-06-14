@@ -53,13 +53,13 @@ def _log_cost(tokens: int, operation: str) -> None:
     log.info("Custo estimado: US$ %.4f (%d tokens)", cost, tokens)
 
 
-def embed_pending(engine: Engine, limite: int = 500) -> int:
+def embed_pending(engine: Engine, limite: int | None = None) -> int:
     """
     Gera embeddings para proposicoes sem embedding e persiste no banco.
 
     Args:
         engine: SQLAlchemy engine conectado ao PostgreSQL.
-        limite: Maximo de proposicoes a processar nesta execucao.
+        limite: Maximo de proposicoes a processar nesta execucao. None = sem limite.
 
     Returns:
         Numero de proposicoes com embedding gerado.
@@ -67,16 +67,19 @@ def embed_pending(engine: Engine, limite: int = 500) -> int:
     client = _get_client()
     model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
+    sql = """
+        SELECT proposicao_id, tipo, ementa
+        FROM fato_proposicoes
+        WHERE embedding IS NULL AND ementa != ''
+        ORDER BY proposicao_id
+    """
+    params: dict = {}
+    if limite is not None:
+        sql += " LIMIT :limite"
+        params["limite"] = limite
+
     with engine.connect() as conn:
-        rows = conn.execute(text(
-            """
-            SELECT proposicao_id, tipo, ementa
-            FROM fato_proposicoes
-            WHERE embedding IS NULL AND ementa != ''
-            ORDER BY proposicao_id
-            LIMIT :limite
-            """
-        ), {"limite": limite}).fetchall()
+        rows = conn.execute(text(sql), params).fetchall()
 
     if not rows:
         log.info("Nenhuma proposicao pendente de embedding.")

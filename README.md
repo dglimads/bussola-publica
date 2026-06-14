@@ -1,13 +1,18 @@
 # Bússola Pública
 
-> **Pipeline de Inteligência Legislativa com IA Generativa**
-> Projeto Integrador — Pós-Tech Engenharia de Dados Xperiun
+> **Radar Legislativo Inteligente — Pipeline ETL + IA Generativa**
+> Projeto Integrador · Pós-Tech Engenharia de Dados Xperiun · Data Challenge: Radar Legislativo
 
 ![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-336791?logo=postgresql)
 ![OpenAI](https://img.shields.io/badge/OpenAI-gpt--4o--mini-412991?logo=openai)
+![Next.js](https://img.shields.io/badge/Dashboard-Next.js%2016-000000?logo=nextdotjs)
 ![n8n](https://img.shields.io/badge/Orquestração-n8n-EA4B71?logo=n8n)
-![Status](https://img.shields.io/badge/Sprint%203-Implementado-green)
+![Status](https://img.shields.io/badge/pipeline-ao%20vivo-success)
+
+**Em uma frase:** dados públicos da Câmara dos Deputados extraídos diariamente,
+estruturados num modelo estrela, enriquecidos com IA (tema, resumo, busca semântica),
+servidos num **dashboard ao vivo** e resumidos num **e-mail semanal** para a equipe.
 
 ---
 
@@ -20,8 +25,8 @@
 5. [Pré-Requisitos](#5-pré-requisitos)
 6. [Setup Completo — Passo a Passo](#6-setup-completo--passo-a-passo)
 7. [Como Executar](#7-como-executar)
-8. [Camada de IA (Sprint 3)](#8-camada-de-ia-sprint-3)
-9. [Automação com n8n](#9-automação-com-n8n)
+8. [Camada de IA](#8-camada-de-ia)
+9. [Entrega: Dashboard + Automação n8n](#9-entrega-dashboard--automação-n8n)
 10. [Estrutura de Pastas](#10-estrutura-de-pastas)
 11. [Variáveis de Ambiente](#11-variáveis-de-ambiente)
 12. [Troubleshooting](#12-troubleshooting)
@@ -42,21 +47,25 @@ A **Bússola Pública** é um pipeline ETL + IA que:
 
 | Etapa | O que faz |
 |-------|-----------|
-| **Extract** | Extrai diariamente via API pública da Câmara (`dadosabertos.camara.leg.br/api/v2`) |
+| **Extract** | Extrai via API pública da Câmara (`dadosabertos.camara.leg.br/api/v2`) com retry e paginação |
 | **Transform** | Valida, tipifica e deduplica com Pandas |
-| **Load** | Persiste em PostgreSQL (Supabase) com modelo dimensional estrela |
+| **Load** | Persiste em PostgreSQL (Supabase) num modelo dimensional estrela de 8 tabelas |
+| **Bridge** | Resolve a autoria N:N (proposição↔autor) e os votos nominais por deputado |
 | **Enrich** | Classifica proposições por tema (embeddings + cosseno) e gera resumos executivos (GPT-4o-mini) |
-| **Alert** | Notifica automaticamente via n8n quando uma proposição de tema crítico é detectada |
+| **Serve** | Dashboard Next.js lê o banco ao vivo; n8n envia um e-mail semanal com o Top 5 da semana |
 
-### Dados Disponíveis no Banco
+### Dados Disponíveis no Banco (estado atual)
 
-| Entidade | Registros carregados |
-|----------|---------------------|
-| Partidos | 21 |
-| Deputados | 513 |
-| Proposições | 100+ (com embeddings e resumos) |
-| Votações | 100+ |
-| Despesas CEAP | ~187.000 |
+| Entidade | Registros | Observação |
+|----------|-----------|------------|
+| Partidos | 21 | |
+| Deputados | 523 | |
+| Temas | 10 | seeds |
+| Proposições | 1.550 | com embedding + resumo; 1.467 com tema |
+| Votações | 100 | 100 processadas pelo bridge de votos |
+| Votos nominais | 480 | `fato_votacao_votos` (votações simbólicas retornam 0) |
+| Autorias (ponte N:N) | 519 | de 500 proposições — rode o bridge mais vezes p/ cobrir as 1.550 |
+| Despesas CEAP | ~145.500 | CEAP 2025 (pipeline isolado) |
 
 **Banco ao vivo:** [Supabase — Bússola Pública](https://supabase.com/dashboard/project/yipwbjexekvrqgnpvjfn)
 
@@ -93,26 +102,41 @@ A **Bússola Pública** é um pipeline ETL + IA que:
 ┌───────────────── LOAD ────────────────────────────────────────────────┐
 │  SQLAlchemy + PostgreSQL (Supabase)                                    │
 │  • INSERT ... ON CONFLICT DO UPDATE (upsert idempotente)              │
-│  • Ordem de FK: partidos → deputados → proposições → votações →       │
-│    despesas                                                            │
+│  • Ordem de FK: partidos → deputados → proposições → votações         │
 │  • COALESCE preserva campos de IA já preenchidos                      │
+│  • Despesas CEAP: pipeline isolado (6_run_despesas.py), à parte        │
 └───────────────────────────────┬───────────────────────────────────────┘
-                                │  Dados relacionais no banco
+                                │  Núcleo relacional no banco
+                                ▼
+┌───────────────── BRIDGE (Pós V1) ─────────────────────────────────────┐
+│  Pontes que completam o modelo (idempotentes, --only-missing)          │
+│  • 4_run_authors_bridge → ponte_proposicao_autores (autoria N:N)       │
+│  • 5_run_votes_bridge   → fato_votacao_votos + vínculo votação→prop    │
+└───────────────────────────────┬───────────────────────────────────────┘
+                                │
                                 ▼
 ┌───────────────── ENRICH (IA) ─────────────────────────────────────────┐
-│  Sprint 3 — OpenAI API                                                 │
+│  OpenAI API                                                            │
 │  • embedder.py   → text-embedding-3-small → VECTOR(1536) em pgvector  │
 │  • classifier.py → similaridade de cosseno → tema_id                  │
 │  • summarizer.py → gpt-4o-mini (T=0.2) → resumo_executivo (3 linhas)  │
 └───────────────────────────────┬───────────────────────────────────────┘
                                 │  Proposições enriquecidas
                                 ▼
+┌───────────────── SERVE (Dashboard) ───────────────────────────────────┐
+│  Next.js 16 + Supabase (anon) + Recharts + SWR                        │
+│  • 9 seções, leitura ao vivo das views agregadas, refresh a cada 60s   │
+│  • Heatmap tema × partido, autoria por deputado, "como cada partido    │
+│    votou", KPIs, busca temática                                        │
+└───────────────────────────────┬───────────────────────────────────────┘
+                                │
+                                ▼
 ┌───────────────── ORQUESTRAÇÃO (n8n) ──────────────────────────────────┐
-│  Workflow diário (06h BRT, dias úteis)                                 │
-│  • Cron → run_pipeline.py --incremental                                │
-│  • Query proposições com tema crítico (critico = TRUE)                 │
-│  • Alerta via E-mail / Telegram se houver match                        │
-│  • Log de execução no Google Sheets                                    │
+│  Workflow semanal (segunda 08h BRT) — e-mail para a equipe             │
+│  • Cron → Query Top 5 proposições da semana (últimos 7 dias)           │
+│    ordenadas por tema crítico, depois nº de autores                    │
+│  • Monta e-mail HTML e envia via SMTP aos integrantes (teste)          │
+│  • Ingestão (scripts 1–6) roda à parte, manualmente                    │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -120,17 +144,23 @@ A **Bússola Pública** é um pipeline ETL + IA que:
 
 ## 3. Modelo de Dados
 
-### Diagrama Estrela
+### Diagrama Estrela (8 tabelas)
 
 ```
-dim_partidos ──────┐
-                   ├──► dim_deputados ──────┐
-dim_temas ─────────┤                        ├──► fato_proposicoes
-                   │                        │    (embedding VECTOR(1536))
-                   │                        │    (resumo_executivo TEXT)
-                   │                        ├──► fato_despesas
-                   └────────────────────────┴──► fato_votacoes
+dim_partidos ──┐
+               ├──► dim_deputados ──┬──► fato_despesas (CEAP)
+dim_temas ─────┤                   ├──► fato_votacao_votos ──┐
+               │                   │     (voto nominal)      │
+               ├──► fato_proposicoes ──► ponte_proposicao_autores (N:N)
+               │     (embedding, resumo, tema)               │
+               └──► fato_votacoes  ◄───────────────────────────┘
 ```
+
+- `ponte_proposicao_autores` (N:N): o `/proposicoes` **não** traz o autor — a ponte é
+  populada por `/proposicoes/{id}/autores`. É a base analítica de autoria (a coluna
+  legada `fato_proposicoes.autor_id` não é mais usada).
+- `fato_votacao_votos`: voto nominal por deputado, via `/votacoes/{id}/votos`.
+- `pipeline_erros`: log não-bloqueante de divergências dos bridges (9ª tabela, operacional).
 
 ### Dicionário de Dados
 
@@ -163,7 +193,7 @@ dim_temas ─────────┤                        ├──► fat
 | `tema_id` | SERIAL PK | Auto-incremento |
 | `nome` | TEXT UNIQUE | Ex: Saúde, Tributário |
 | `descricao` | TEXT | Texto usado para gerar embedding do tema |
-| `critico` | BOOLEAN | Se TRUE: gera alerta no n8n |
+| `critico` | BOOLEAN | Se TRUE: prioriza a proposição no e-mail semanal e no painel de Alertas |
 
 **10 temas iniciais (seeds):** Saúde ⚠️, Tributário ⚠️, Trabalho ⚠️, Tecnologia e IA ⚠️, Economia ⚠️, Meio Ambiente, Segurança Pública, Educação, Direitos Humanos, Infraestrutura
 
@@ -206,6 +236,31 @@ dim_temas ─────────┤                        ├──► fat
 | `fornecedor_cnpj` | TEXT | CNPJ/CPF normalizado |
 | `ingested_at` | TIMESTAMPTZ | Timestamp de carga |
 
+#### `ponte_proposicao_autores` (N:N — Pós V1)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `proposicao_id` | INTEGER | → `fato_proposicoes` |
+| `autor_tipo` | TEXT | String crua da API (ex: `Deputado(a)`, `COMISSÃO PERMANENTE`) |
+| `deputado_id` | INTEGER | preenchido quando a URI é `/deputados/{id}` (sem FK rígida) |
+| `partido_id` | INTEGER | preenchido quando a URI é `/partidos/{id}` |
+| `nome_autor` | TEXT | Nome do autor |
+| `ordem_assinatura` / `proponente` | INTEGER / BOOLEAN | Ordem e se é o proponente |
+| `uri_autor` | TEXT | URI da API (fonte da verdade do tipo) |
+
+> Índice único: `(proposicao_id, autor_tipo, nome_autor, COALESCE(uri_autor,''))`.
+> Sem FK para as dims — autores podem ser de legislaturas passadas, comissões, Senado ou Executivo.
+
+#### `fato_votacao_votos` (Pós V1)
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| `votacao_id` | TEXT | → `fato_votacoes` |
+| `deputado_id` | INTEGER | → `dim_deputados` |
+| `tipo_voto` | TEXT | Sim / Não / Abstenção / Obstrução... |
+| `sigla_partido_voto` | TEXT | Partido **no momento do voto** (pode diferir do atual) |
+| `sigla_uf_voto` | TEXT | UF no momento do voto |
+
+> Chave: `(votacao_id, deputado_id)`. Votações simbólicas retornam lista vazia (normal).
+
 ---
 
 ## 4. Stack Tecnológica
@@ -220,7 +275,8 @@ dim_temas ─────────┤                        ├──► fat
 | Vetores | `pgvector` | 0.7 | Vector store direto no Postgres |
 | IA — Embeddings | `text-embedding-3-small` | — | ~US$ 0.02/1M tokens |
 | IA — Resumo | `gpt-4o-mini` | — | Melhor custo para PT-BR |
-| Orquestração | n8n Cloud | — | Visual, integração nativa com Postgres |
+| Dashboard | Next.js + React + Recharts + SWR | 16 | Painel ao vivo lendo o Supabase (anon) |
+| Orquestração | n8n Cloud | — | E-mail semanal via SMTP, query direta no Postgres |
 | Ambiente | `python-dotenv` | 1.0 | Leitura de `.env` |
 
 ---
@@ -364,16 +420,16 @@ Execute nesta ordem na primeira vez:
 
 ```bash
 # 1. Extrair dados brutos da API para data/raw/
-python scripts/run_extraction.py
+python scripts/1_run_extraction.py
 
 # 2. Transformar + carregar no banco
-python scripts/run_pipeline.py --apenas-carga
+python scripts/2_run_pipeline.py --apenas-carga
 ```
 
 Ou em comando único (extrai + transforma + carrega):
 
 ```bash
-python scripts/run_pipeline.py
+python scripts/2_run_pipeline.py
 ```
 
 ---
@@ -385,7 +441,7 @@ python scripts/run_pipeline.py
 Extrai apenas registros das últimas 24h:
 
 ```bash
-python scripts/run_pipeline.py --incremental
+python scripts/2_run_pipeline.py --incremental
 ```
 
 #### Apenas carga (pular extração)
@@ -393,17 +449,21 @@ python scripts/run_pipeline.py --incremental
 Usa os JSONs já salvos em `data/raw/`:
 
 ```bash
-python scripts/run_pipeline.py --apenas-carga
+python scripts/2_run_pipeline.py --apenas-carga
 ```
 
-#### Com despesas CEAP (~20 minutos, ~500 chamadas HTTP)
+#### Despesas CEAP (~20 minutos, ~500 chamadas HTTP + ~145k linhas)
+
+Pipeline isolado, fora do escopo do Radar Legislativo. Extrai **e** carrega num
+único comando. Rode por **último**, depois dos demais, para não travar o ciclo:
 
 ```bash
-# Extrair despesas de 2025
-python scripts/run_extraction.py --incluir-despesas --ano-despesas 2025
+# Extrai + transforma + carrega despesas de 2025 (idempotente)
+python scripts/6_run_despesas.py --ano 2025
 
-# Carregar no banco
-python scripts/run_pipeline.py --apenas-carga
+# Variacoes: so extrair, ou so carregar o raw ja existente
+python scripts/6_run_despesas.py --ano 2025 --apenas-extracao
+python scripts/6_run_despesas.py --apenas-carga
 ```
 
 #### Enriquecimento com IA (Sprint 3)
@@ -412,16 +472,32 @@ python scripts/run_pipeline.py --apenas-carga
 
 ```bash
 # Processar até 100 proposições (embedding + classificação + resumo)
-python scripts/run_ai_enrichment.py --limite 100
+python scripts/3_run_ai_enrichment.py --limite 100
 
 # Apenas embeddings (sem resumo — mais barato)
-python scripts/run_ai_enrichment.py --apenas-embed
+python scripts/3_run_ai_enrichment.py --apenas-embed
 
 # Apenas resumos (proposições já com embedding)
-python scripts/run_ai_enrichment.py --apenas-resume
+python scripts/3_run_ai_enrichment.py --apenas-resume
 
 # Teste piloto com 10 registros (recomendado antes de qualquer escala)
-python scripts/run_ai_enrichment.py --limite 10
+python scripts/3_run_ai_enrichment.py --limite 10
+```
+
+#### Autoria (ponte N:N) + votos nominais (roadmap pós V1)
+
+> Requer a migration `sql/migration_autoria_votos.sql` aplicada no Supabase.
+> Destrava o heatmap **tema × partido**, autoria por deputado/partido e voto nominal.
+
+```bash
+# Popular a ponte proposição<->autor (1 chamada /proposicoes/{id}/autores por proposição)
+python scripts/4_run_authors_bridge.py --only-missing
+
+# Vincular votação->proposição e popular os votos nominais
+python scripts/5_run_votes_bridge.py --only-missing
+
+# Tudo de uma vez, integrado ao pipeline:
+python scripts/2_run_pipeline.py --with-authors --with-votes
 ```
 
 #### Exploração interativa da API
@@ -435,11 +511,14 @@ python scripts/explore_api.py
 ### Ordem recomendada para carga completa do zero
 
 ```
-1. python scripts/explore_api.py                     # valida conectividade
-2. python scripts/run_extraction.py                  # extrai raw data (~5 min)
-3. python scripts/run_pipeline.py --apenas-carga     # transforma + carrega (~2 min)
-4. python scripts/run_ai_enrichment.py --limite 10   # teste piloto IA
-5. python scripts/run_ai_enrichment.py --limite 100  # enriquecimento em escala
+1. python scripts/explore_api.py                       # valida conectividade
+2. python scripts/1_run_extraction.py                  # extrai raw data (~5 min)
+3. python scripts/2_run_pipeline.py --apenas-carga     # transforma + carrega (~2 min)
+4. python scripts/3_run_ai_enrichment.py --limite 10   # teste piloto IA
+5. python scripts/3_run_ai_enrichment.py --limite 100  # enriquecimento em escala
+6. python scripts/4_run_authors_bridge.py --only-missing  # ponte proposicao<->autor (pos V1)
+7. python scripts/5_run_votes_bridge.py --only-missing    # votos nominais + vinculo (pos V1)
+8. python scripts/6_run_despesas.py --ano 2025            # despesas CEAP, por ultimo (lento, ~20min)
 ```
 
 ---
@@ -479,7 +558,7 @@ LIMIT 5;
 
 ---
 
-## 8. Camada de IA (Sprint 3)
+## 8. Camada de IA
 
 ### Arquitetura
 
@@ -519,45 +598,75 @@ Decisões de arquitetura detalhadas em [docs/decisoes_ia.md](docs/decisoes_ia.md
 
 ---
 
-## 9. Automação com n8n
+## 9. Entrega: Dashboard + Automação n8n
 
-### Workflow diário
+### Dashboard — Bússola Legislativa (Next.js 16)
+
+Painel web que lê o Supabase **ao vivo** (via views agregadas e a chave anon),
+com auto-refresh a cada 60s. Pasta `dashboard/`.
+
+| Seção | Mostra |
+|-------|--------|
+| Visão Geral | KPIs (deputados, proposições, votações, despesas, cobertura de IA) |
+| Radar Temático | Distribuição por tema + **heatmap tema × partido** (autoria) |
+| Atividade Parlamentar | Proposições por partido (autor), top deputados por autoria, bancadas, CEAP |
+| Votações | Resultado das votações + **"como cada partido votou"** (votos nominais) |
+| IA Legislativa | Cobertura de embeddings/tema/resumo, exemplos de resumo executivo |
+| Alertas | Temas críticos e proposições recentes classificadas |
+| Arquitetura · Sobre · Equipe | Modelo de 8 tabelas, stack e integrantes |
+
+```bash
+cd dashboard
+npm install
+# .env.local: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm run dev          # http://localhost:3000
+```
+
+> Os painéis de **autoria** e **votos por partido** dependem dos bridges (scripts 4 e 5)
+> e das views da migration `sql/migration_autoria_votos.sql`.
+
+### Automação n8n — E-mail semanal (Top 5 da semana)
 
 ```
-[Cron 06:00 BRT — dias úteis]
+[Cron Segunda 08:00 BRT]   (0 8 * * 1)
             │
             ▼
-[python scripts/run_pipeline.py --incremental]
+[SQL: Top 5 proposições da semana — últimos 7 dias]
+       (ORDER BY critico DESC, qtd_autores DESC, data DESC)
             │
             ▼
-[SQL: proposições com tema crítico nas últimas 24h]
+[Code: monta e-mail HTML — sem proposições → não envia]
             │
-       ┌────┴────┐
-     SIM        NÃO
-       │          │
-       ▼          ▼
-[Alerta Email  [Log: sem
- / Telegram]    alertas]
+            ▼
+[SMTP: envia para os e-mails da equipe (teste)]
 ```
 
 ### Configurar o workflow
 
-1. Importe `n8n/bussola_diario.json` no painel do n8n
+1. Importe `n8n/bussola_email_semanal.json` no painel do n8n
 2. Configure as credenciais:
    - **PostgreSQL:** connection string do Supabase
-   - **Email / Telegram:** conforme canal escolhido
-3. Ative o workflow — o cron dispara automaticamente às 06h00 BRT
+   - **SMTP:** ex. Gmail (`smtp.gmail.com:465`, SSL) com App Password
+3. Ajuste o `fromEmail` no nó "Envia email para a equipe"
+4. Ative o workflow (ou use "Test workflow" para enviar na hora)
 
-### Alerta de tema crítico
+> A ingestão (scripts 1–6) **não** é mais orquestrada pelo n8n nesta versão —
+> rode-a manualmente para manter os dados frescos antes do envio semanal.
 
-Quando uma proposição de tema marcado como `critico = TRUE` (Saúde, Tributário, Trabalho, Tecnologia e IA, Economia) é detectada, o workflow envia:
+### E-mail semanal — Top 5 da semana
+
+As 5 proposições mais relevantes dos últimos 7 dias (tema crítico primeiro,
+depois maior nº de autores). Enviado aos integrantes como teste:
 
 ```
-[Bússola Pública] Proposições críticas — DD/MM/YYYY
+[Bússola Pública] Top 5 da semana — DD/MM/YYYY
 
-Tema: Tributário
-PL — Altera a incidência do imposto de renda sobre dividendos.
+🔴 Crítico · Tributário · 3 autor(es) · Dep. Fulano
+PL 1234/2025
+Altera a incidência do imposto de renda sobre dividendos.
 Resumo: A proposição modifica as alíquotas do IR sobre lucros distribuídos...
+---
+[até 5 proposições]
 ```
 
 ---
@@ -591,9 +700,14 @@ bussola-publica/
 │   │   ├── deputados.py             # raw → dim_deputados
 │   │   ├── proposicoes.py           # raw → fato_proposicoes
 │   │   ├── votacoes.py              # raw → fato_votacoes
-│   │   └── despesas.py              # raw → fato_despesas (CEAP)
+│   │   ├── despesas.py              # raw → fato_despesas (CEAP)
+│   │   ├── autores.py              # payload autores → ponte (resolve tipo pela URI)
+│   │   └── votos.py                # payload votos → registros de voto nominal
 │   ├── load/
-│   │   └── upsert.py                # Upsert idempotente via SQLAlchemy
+│   │   └── upsert.py                # Upsert idempotente (inclui ponte/votos/flags/erros)
+│   ├── bridge/                      # Pós V1: orquestração dos bridges
+│   │   ├── autores.py              # run_authors_bridge (ponte N:N)
+│   │   └── votos.py                # run_votes_bridge (votos + vínculo votação→prop)
 │   ├── utils/
 │   │   └── text.py                  # safe_str, clean_text, normalize_cnpj_cpf
 │   └── ai/
@@ -603,15 +717,20 @@ bussola-publica/
 │       └── prompts/
 │           └── resumo_executivo.md  # Prompt versionado para gpt-4o-mini
 │
-├── scripts/
+├── scripts/                         # numerados na ordem de execução
 │   ├── explore_api.py               # Sprint 1: exploração interativa da API
-│   ├── run_extraction.py            # Sprint 2: extração (raw → data/raw/)
-│   ├── run_pipeline.py              # Sprint 2+3: pipeline completo E2E
-│   └── run_ai_enrichment.py         # Sprint 3: enriquecimento IA
+│   ├── 1_run_extraction.py          # Sprint 2: extração (raw → data/raw/)
+│   ├── 2_run_pipeline.py            # Sprint 2+3: pipeline E2E (+ --with-authors/--with-votes)
+│   ├── 3_run_ai_enrichment.py       # Sprint 3: enriquecimento IA
+│   ├── 4_run_authors_bridge.py      # Pós V1: ponte proposição<->autor
+│   ├── 5_run_votes_bridge.py        # Pós V1: votos nominais + vínculo votação->proposição
+│   ├── 6_run_despesas.py            # Despesas CEAP: pipeline isolado (rodar por último)
+│   └── trigger_server.py            # servidor HTTP p/ acionar via n8n
 │
 ├── sql/
-│   ├── schema.sql                   # DDL do modelo dimensional (rodar 1x no Supabase)
-│   └── seeds_temas.sql              # 10 temas iniciais para dim_temas
+│   ├── schema.sql                      # DDL do modelo dimensional (rodar 1x no Supabase)
+│   ├── migration_autoria_votos.sql     # Pós V1: ponte N:N, votos nominais, views agregadas
+│   └── seeds_temas.sql                 # 10 temas iniciais para dim_temas
 │
 ├── data/
 │   ├── raw/                         # JSONs brutos da API (git-ignored)
@@ -626,8 +745,15 @@ bussola-publica/
 ├── notebooks/
 │   └── 01_exploracao_api.ipynb      # Exploração interativa do Sprint 1
 │
+├── dashboard/                       # Painel Next.js 16 (Bússola Legislativa)
+│   ├── app/                         # App Router + globals.css (tema/cores-raiz)
+│   ├── components/sections/         # Visão Geral, Radar Temático, Votações, ...
+│   └── lib/                         # queries.ts (views), types.ts, equipe.ts
+│
+├── presentation/                    # Apresentações HTML (p1-arquitetura, p2-resultados)
+│
 ├── n8n/
-│   └── bussola_diario.json          # Workflow n8n (importar no painel)
+│   └── bussola_email_semanal.json   # Workflow n8n: e-mail semanal Top 5 (importar no painel)
 │
 └── docs/
     ├── PRD.md                       # Product Requirements Document completo
@@ -661,11 +787,14 @@ bussola-publica/
 | `RuntimeError: DATABASE_URL nao configurada` | `.env` não criado ou incompleto | `copy .env.example .env` e preencher `DATABASE_URL` |
 | `ModuleNotFoundError: No module named 'pandas'` | Dependências não instaladas | `pip install --only-binary :all: -r requirements.txt` |
 | `UnicodeDecodeError` durante pip install | Caminho com acentos no Windows | Usar sempre `--only-binary :all:` em todo `pip install` |
-| `FileNotFoundError: data/raw/...` | Dados não extraídos | Executar `python scripts/run_extraction.py` primeiro |
+| `FileNotFoundError: data/raw/...` | Dados não extraídos | Executar `python scripts/1_run_extraction.py` primeiro |
 | `relation "dim_partidos" does not exist` | Schema não aplicado | Executar `sql/schema.sql` no SQL Editor do Supabase |
 | `openai.RateLimitError: insufficient_quota` | Sem crédito na conta OpenAI | Adicionar billing em [platform.openai.com/settings](https://platform.openai.com/settings) |
 | Pipeline duplica registros | Execução sem upsert | Todos os upserts usam `ON CONFLICT DO UPDATE` — verifique se não há INSERT direto |
 | `psycopg2.OperationalError: SSL connection` | Supabase exige SSL | A string de conexão do Supabase já inclui SSL por padrão; não modificar |
+| `HTTP 400 "instance":"pagina, itens"` no bridge | Sub-recurso (autores/votos) chamado com paginação | Esses endpoints usam `save_one` (sem `itens`/`pagina`), não `save_raw` |
+| Painel de autoria/heatmap vazio | Ponte não populada ou `deputado_id` nulo | Rodar `4_run_authors_bridge.py`; o tipo do autor é resolvido pela **URI**, não pela string `tipo` |
+| Pipeline diário lento | Despesas no ciclo principal | Despesas têm pipeline próprio (`6_run_despesas.py`); `upsert_all` as pula por padrão |
 
 ### Diagnóstico rápido
 
@@ -680,7 +809,7 @@ import os; from dotenv import load_dotenv
 load_dotenv()
 engine = create_engine(os.getenv('DATABASE_URL'))
 with engine.connect() as conn:
-    for t in ['dim_partidos','dim_deputados','fato_proposicoes','fato_votacoes','fato_despesas']:
+    for t in ['dim_partidos','dim_deputados','fato_proposicoes','fato_votacoes','ponte_proposicao_autores','fato_votacao_votos','fato_despesas']:
         r = conn.execute(text(f'SELECT COUNT(*) FROM {t}')).scalar()
         print(f'{t}: {r}')
 "
@@ -706,19 +835,21 @@ with engine.connect() as conn:
 | Sprint | Escopo | Status |
 |--------|--------|:------:|
 | **Sprint 1** | Exploração da API, cliente HTTP com retry e paginação automática | ✅ Concluído |
-| **Sprint 2** | Transformação Pandas, carga upsert idempotente, despesas CEAP (~187k registros) | ✅ Concluído |
-| **Sprint 3** | IA: embeddings pgvector, classificação temática por cosseno, resumo executivo GPT-4o-mini | ✅ Implementado |
+| **Sprint 2** | Transformação Pandas, carga upsert idempotente, despesas CEAP (~145k registros) | ✅ Concluído |
+| **Sprint 3** | IA: embeddings pgvector, classificação temática por cosseno, resumo executivo GPT-4o-mini | ✅ Concluído |
+| **Pós V1** | Autoria N:N (ponte), votos nominais, heatmap tema × partido | ✅ Concluído |
+| **Entrega** | Dashboard Next.js ao vivo + workflow n8n de e-mail semanal | ✅ Concluído |
 
 **Janela de entrega:** 13/Mai/2026 → 15/Jun/2026
 
-### Roadmap Pós-V1
+### Roadmap (próximos passos)
 
 | Item | Valor esperado |
 |------|---------------|
-| Dashboard Streamlit / Metabase sobre o Supabase | Self-service para analistas |
-| API REST exposta com autenticação | Produto B2B revenue-gen |
+| Completar a autoria das 1.550 proposições (rodar o bridge em lotes) | Cobertura total do heatmap |
+| Análise de coerência partidária sobre `fato_votacao_votos` | Score de fidelidade por deputado |
 | RAG sobre histórico legislativo (LLM + pgvector) | Q&A: "O que foi votado sobre IA nos últimos 12 meses?" |
-| Cobertura do Senado e TSE | Visão legislativa 360° |
+| API REST pública para jornalistas/pesquisadores | Dados estruturados + IA via REST |
 | Índices HNSW em pgvector para busca semântica | Performance em escala |
 | CI/CD com GitHub Actions | Maturidade de engenharia |
 

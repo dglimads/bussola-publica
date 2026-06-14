@@ -245,7 +245,7 @@ Antes de abrir PR com nova funcao de transformacao, confirme:
 - [ ] Loga contagem no final (`log.info("X transformados: %d registros", len(df))`)
 - [ ] Funcao de upsert usa `ON CONFLICT DO UPDATE` (nao INSERT puro)
 - [ ] Campos de IA (tema_id, embedding) usam COALESCE para preservar valores existentes
-- [ ] Testado com `run_pipeline.py --apenas-carga` sem erros
+- [ ] Testado com `2_run_pipeline.py --apenas-carga` sem erros
 
 ---
 

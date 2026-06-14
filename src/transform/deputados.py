@@ -43,7 +43,7 @@ def transform_deputados(raw_dir: Path = DATA_RAW_DIR) -> pd.DataFrame:
     if not list_files:
         raise FileNotFoundError(
             f"Nenhum raw de lista de deputados em {deputados_dir}. "
-            "Execute scripts/run_extraction.py primeiro."
+            "Execute scripts/1_run_extraction.py primeiro."
         )
 
     envelope = json.loads(list_files[-1].read_text(encoding="utf-8", errors="replace"))
