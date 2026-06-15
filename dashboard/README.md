@@ -50,12 +50,17 @@ npm run dev        # http://localhost:3000
 - `Entregáveis` — checklist dos 5 entregáveis + critérios de avaliação + **galeria de prints**.
 - `Equipe` — integrantes do grupo (nome, e-mail, telefone).
 
-### Prints dos entregáveis
+### Prints, apresentações e workflow (aba Entregáveis)
 
-Salve os screenshots em [`public/prints/`](public/prints/README.md) com os nomes indicados
-(`pipeline.png`, `supabase-tabelas.png`, `n8n-execucao.png`, `dashboard.png`, `slides.png`, …).
-Sem o arquivo, a galeria mostra um placeholder; ao adicionar a imagem (e rebuildar, se for
-estático), ela aparece sozinha.
+- **Galeria de evidências** — lê as imagens da **raiz** de [`public/`](public/prints/README.md)
+  (`supabase-*.png`, `pipeline.png`, `n8n-*.png`, `dashboard*.png`, `slides.png`, …). Cada
+  print **abre em tamanho real ao clicar**; sem o arquivo, mostra um placeholder.
+- **Apresentação executiva** — abre em nova guia / baixa `apresentacao/p1-arquitetura.html`
+  e `apresentacao/p2-resultados.html` (cópias servidas pelo próprio site estático).
+- **Workflow n8n** — baixa `n8n/bussola_email_semanal.json` e exibe `n8n-workflow.png`.
+
+> Essas pastas (`apresentacao/`, `docs/prints/`, `n8n/`) ficam em `public/` e por isso
+> entram automaticamente no build estático (`out/`). Rode `npm run build` após alterá-las.
 
 ---
 
