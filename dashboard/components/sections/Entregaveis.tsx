@@ -108,8 +108,8 @@ export function Entregaveis() {
               <div style={linksRow}>
                 <a className="deliv-where" href={PROJETO.slideArquitetura} target="_blank" rel="noreferrer"><ExternalLink size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />p1 · Arquitetura ↗</a>
                 <a className="deliv-where" href={PROJETO.slideResultados} target="_blank" rel="noreferrer"><ExternalLink size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />p2 · Resultados ↗</a>
-                <a className="deliv-where" href={PROJETO.slideArquitetura} download><Download size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />baixar p1</a>
-                <a className="deliv-where" href={PROJETO.slideResultados} download><Download size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />baixar p2</a>
+                <a className="deliv-where" href={PROJETO.slideArquitetura} download="bussola-p1-arquitetura.html"><Download size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />baixar p1</a>
+                <a className="deliv-where" href={PROJETO.slideResultados} download="bussola-p2-resultados.html"><Download size={11} style={{ verticalAlign: "-1px", marginRight: 4 }} />baixar p2</a>
               </div>
             </div>
           </div>
