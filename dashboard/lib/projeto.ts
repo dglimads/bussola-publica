@@ -12,5 +12,14 @@ export const PROJETO = {
   supabaseRest: "https://yipwbjexekvrqgnpvjfn.supabase.co",
   apiCamara: "https://dadosabertos.camara.leg.br/api/v2",
   apiCamaraDocs: "https://dadosabertos.camara.leg.br/swagger/api.html",
+
+  // Caminho do workflow no repositorio (rotulo) + copia servida pelo site (download).
   n8nWorkflow: "n8n/bussola_email_semanal.json",
+  n8nWorkflowDownload: "/n8n/bussola_email_semanal.json",
+  n8nWorkflowPrint: "/n8n-workflow.png",
+
+  // Apresentacoes HTML servidas pelo proprio dashboard (public/apresentacao/).
+  // Abrem em nova guia e podem ser baixadas (atributo download).
+  slideArquitetura: "/apresentacao/p1-arquitetura.html",
+  slideResultados: "/apresentacao/p2-resultados.html",
 } as const;

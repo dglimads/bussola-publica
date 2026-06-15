@@ -620,7 +620,13 @@ cd dashboard
 npm install
 # .env.local: NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
 npm run dev          # http://localhost:3000
+npm run build        # gera out/ (site 100% estatico, pronto p/ publicar)
 ```
+
+> **Publicar para a banca/turma:** o build é estático (`out/`) e o próprio site serve o
+> dashboard ao vivo, as **apresentações** (`/apresentacao/`) e o **workflow n8n**
+> (`/n8n/`). Passo a passo (Vercel, Netlify, GitHub Pages) em
+> [`docs/HOSPEDAGEM.md`](docs/HOSPEDAGEM.md).
 
 > Os painéis de **autoria** e **votos por partido** dependem dos bridges (scripts 4 e 5)
 > e das views da migration `sql/migration_autoria_votos.sql`.
@@ -668,6 +674,20 @@ Resumo: A proposição modifica as alíquotas do IR sobre lucros distribuídos..
 ---
 [até 5 proposições]
 ```
+
+### Apresentação executiva (slides HTML)
+
+Dois decks HTML autocontidos (navegação por teclado/scroll/setas, sem dependências externas):
+
+| Deck | Conteúdo | Arquivo |
+|------|----------|---------|
+| **p1 · Arquitetura** | Pipeline ETL, modelo estrela, camada de IA, stack e entrega | [`presentation/p1-arquitetura.html`](presentation/p1-arquitetura.html) |
+| **p2 · Resultados** | Dataset, gastos CEAP, proposições, votações e o dashboard ao vivo | [`presentation/p2-resultados.html`](presentation/p2-resultados.html) |
+
+Abra cada arquivo direto no navegador (duplo clique). O **dashboard hospedado** também
+serve as duas apresentações — aba **Entregáveis → "Apresentação executiva"**: abra em
+nova guia ou baixe o `.html`. Os prints exibidos nos slides vêm de
+[`docs/prints/`](docs/prints/) (e são espelhados em `dashboard/public/` para o site estático).
 
 ---
 

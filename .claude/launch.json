@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bussola-static-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "4399", "--directory", "dashboard/out"],
+      "port": 4399
+    }
+  ]
+}

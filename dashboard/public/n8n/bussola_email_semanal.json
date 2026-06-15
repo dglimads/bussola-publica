@@ -1,0 +1,102 @@
+{
+  "name": "Bussola Publica — Email Semanal (Top 5)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "cron-semanal",
+      "name": "Cron — Segunda 08h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.proposicao_id,\n  p.tipo,\n  p.ementa,\n  p.resumo_executivo,\n  p.qtd_autores,\n  p.autor_principal_nome,\n  p.data_apresentacao,\n  t.nome    AS tema,\n  t.critico AS critico\nFROM fato_proposicoes p\nLEFT JOIN dim_temas t ON p.tema_id = t.tema_id\nWHERE p.data_apresentacao >= CURRENT_DATE - INTERVAL '7 days'\nORDER BY\n  COALESCE(t.critico, FALSE) DESC,\n  COALESCE(p.qtd_autores, 0) DESC,\n  p.data_apresentacao DESC\nLIMIT 5;",
+        "options": {}
+      },
+      "id": "query-top5",
+      "name": "Top 5 da semana",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [500, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-prod",
+          "name": "Supabase Bussola Publica"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta o email HTML com as 5 proposicoes mais relevantes da semana.\n// Relevancia = tema critico primeiro, depois maior numero de autores.\nconst items = $input.all();\nif (items.length === 0) return []; // sem proposicoes na semana -> nao envia email\n\nconst hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n\nconst cards = items.map((i, idx) => {\n  const d = i.json;\n  const critico = d.critico === true || d.critico === 't';\n  const badge = critico ? '🔴 Critico' : '⚪ Geral';\n  const tema = d.tema || 'Sem tema classificado';\n  const autores = d.qtd_autores ? (d.qtd_autores + ' autor(es)') : 'autoria nao carregada';\n  const principal = d.autor_principal_nome ? (' · ' + d.autor_principal_nome) : '';\n  const resumo = d.resumo_executivo || 'Resumo por IA ainda nao gerado.';\n  const ementa = d.ementa || '';\n  return `<tr><td style='padding:16px 4px;border-bottom:1px solid #e5e7eb;'>`\n    + `<div style='font-size:12px;color:#6b7280;margin-bottom:4px;'>${badge} &nbsp;·&nbsp; ${tema} &nbsp;·&nbsp; ${autores}${principal}</div>`\n    + `<div style='font-size:16px;font-weight:600;color:#111827;'>${idx + 1}. ${d.tipo} ${d.proposicao_id}</div>`\n    + `<div style='font-size:14px;color:#374151;margin-top:4px;'>${ementa}</div>`\n    + `<div style='font-size:13px;color:#4b5563;margin-top:6px;font-style:italic;'>${resumo}</div>`\n    + `</td></tr>`;\n}).join('');\n\nconst html = `<div style='font-family:Arial,Helvetica,sans-serif;max-width:640px;margin:0 auto;color:#111827;'>`\n  + `<h2 style='color:#1d4ed8;margin-bottom:2px;'>Bussola Publica</h2>`\n  + `<p style='font-size:14px;color:#6b7280;margin-top:0;'>Top 5 proposicoes mais relevantes da semana — ${hoje}</p>`\n  + `<table style='width:100%;border-collapse:collapse;'>${cards}</table>`\n  + `<p style='font-size:12px;color:#9ca3af;margin-top:24px;'>Radar Legislativo · Camara dos Deputados · enviado automaticamente via n8n.</p>`\n  + `</div>`;\n\nconst subject = `Bussola Publica — Top 5 da semana (${hoje})`;\nreturn [{ json: { subject, html } }];"
+      },
+      "id": "formata-email",
+      "name": "Formata email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "bussola.publica@gmail.com",
+        "toEmail": "giovannabjesus@gmail.com, dglimads@gmail.com, santos.bielpereira@gmail.com, thiagopedrazi@hotmail.com, oscar.nac@hotmail.com, bittencourt.ecn@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "envia-email",
+      "name": "Envia email para a equipe",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1000, 300],
+      "credentials": {
+        "smtp": {
+          "id": "smtp-bussola",
+          "name": "SMTP Bussola Publica"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — Segunda 08h": {
+      "main": [
+        [{ "node": "Top 5 da semana", "type": "main", "index": 0 }]
+      ]
+    },
+    "Top 5 da semana": {
+      "main": [
+        [{ "node": "Formata email HTML", "type": "main", "index": 0 }]
+      ]
+    },
+    "Formata email HTML": {
+      "main": [
+        [{ "node": "Envia email para a equipe", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "",
+    "timezone": "America/Sao_Paulo"
+  },
+  "staticData": null,
+  "tags": ["bussola-publica", "email", "automacao"],
+  "versionId": "bussola-email-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
