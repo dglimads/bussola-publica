@@ -19,7 +19,10 @@ export const PROJETO = {
   n8nWorkflowPrint: "/n8n-workflow.png",
 
   // Apresentacoes HTML servidas pelo proprio dashboard (public/apresentacao/).
-  // Abrem em nova guia e podem ser baixadas (atributo download).
-  slideArquitetura: "/apresentacao/p1-arquitetura.html",
-  slideResultados: "/apresentacao/p2-resultados.html",
+  // IMPORTANTE: em producao a Vercel roda o build estatico (next output:export +
+  // trailingSlash:true) e serve arquivos .html como "clean URLs" (SEM a extensao).
+  // A URL canonica e /apresentacao/<slide>/ — apontar para o .html retorna 404 na
+  // Vercel. O download usa esta mesma URL + filename explicito (ver Entregaveis.tsx).
+  slideArquitetura: "/apresentacao/p1-arquitetura/",
+  slideResultados: "/apresentacao/p2-resultados/",
 } as const;
